@@ -1,0 +1,8 @@
+40
+0 NOMOD ;
+1 NUM F1 test\audioFiles\Bass-Drum-1.wav
+3 NUM F2 test\audioFiles\Alesis-Fusion-Clean-Guitar-C3.wav
+5 NUM F3 test\audioFiles\Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
+7 NUM F4 test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
+39 NUM 0KP DEFAULT
+40 NUM 1 DEFAULT

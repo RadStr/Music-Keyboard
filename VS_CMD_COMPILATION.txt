@@ -1,0 +1,1 @@
+cl /EHsc Key.cpp Keyboard.cpp KeySetWindow.cpp Main.cpp Textbox.cpp /I include /link /LIBPATH:"lib" SDL2.lib SDL2main.lib SDL2_ttf.lib /SUBSYSTEM:WINDOWS /out:prog.exe
