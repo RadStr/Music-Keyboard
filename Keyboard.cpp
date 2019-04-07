@@ -428,6 +428,7 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 	int keyNumber = -1;
 	int lastKeyNumber = -1;
 	int currentToken;
+	size_t firstSpaceInd = 0;
 
 	int currLine = 0;
 	int keyIndex = 0;		// keyIndex, because of differences in indexing between key array and indexing in config file
@@ -450,6 +451,11 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 			else {
 				std::stringstream ss(line);
 				currentToken = 0;
+				if ((firstSpaceInd = line.find(' ')) == std::string::npos) {
+					initKeyWithDefaultAudio(&this->keys[keyIndex]);
+					keyNumber = keyNumber + 1;
+					continue;					// I could use else, but continue does the same thing and doesn't pollute the code with more { }
+				}
 				while (std::getline(ss, token, delim)) {
 					currentToken++;
 					if (currentToken == 1) {
@@ -474,7 +480,7 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 							hasRecordKey = true;
 						}
 						else {
-							for (; keyIndex < keyNumber - 1; currLine++, keyIndex++) {
+							for (; keyIndex < keyNumber - 1; currLine++, keyIndex++) {			// -1 because there difference in the indexing (In the file indexing from 1, in programming from 0)
 								initKeyWithDefaultAudio(&this->keys[keyIndex]);
 							}
 						}
@@ -508,7 +514,9 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 							else {
 								filename = token;
 								char *c = &filename[0];
-								this->keys[keyIndex].setAudioBufferWithFile(c, this->audioSpec);
+								if (! this->keys[keyIndex].setAudioBufferWithFile(c, this->audioSpec)) {
+									initKeyWithDefaultAudio(&this->keys[keyIndex]);
+								}
 								c = NULL;
 							}
 						}
@@ -571,7 +579,7 @@ void Keyboard::setModifiersForKeyFromConfigFile(Key *key, const std::string &tok
 
 void Keyboard::setControlForKeyFromConfigFile(Key *key, const std::string &token) {
 	char c = token[0];
-	if (token.size() > 1 && (c == 'F' || c == 'f')) {
+	if (token.size() > 1 && (c == 'F' || c == 'f')) {				// Process F keys (F1, F2, ...)
 		int fNum;
 		try {
 			fNum = std::stoi(token.substr(1, std::string::npos));
@@ -586,6 +594,14 @@ void Keyboard::setControlForKeyFromConfigFile(Key *key, const std::string &token
 		SDL_Scancode sc = (SDL_Scancode)(SDL_SCANCODE_F1 + fNum - 1);
 		key->keysym.sym = SDL_SCANCODE_TO_KEYCODE(sc);
 		key->keysym.scancode = sc;
+	}
+	else if (token == "BACKSPACE") {
+		key->keysym.sym = SDLK_BACKSPACE;
+		key->keysym.scancode = SDL_SCANCODE_BACKSPACE;
+	}
+	else if (token == "SPACE") {
+		key->keysym.sym = SDLK_SPACE;
+		key->keysym.scancode = SDL_SCANCODE_SPACE;
 	}
 	else if (token == "ENTER") {
 		key->keysym.sym = SDLK_RETURN;
@@ -914,10 +930,14 @@ bool Keyboard::checkForMods(const Uint16 keyMod, const Uint16 keyEventMod) {
 	Uint16 keyModWithoutMod = km & keyMod;
 	Uint16 keyEventModWithoutMod = km & keyEventMod;
 
+	mod1 = (SDL_Keymod)(KMOD_CTRL & keyMod);
+	mod2 = (SDL_Keymod)(KMOD_SHIFT & keyMod);
+	mod3 = (SDL_Keymod)(KMOD_ALT & keyMod);
+
 	return ((keyMod & keyEventMod) == keyEventMod && keyModWithoutMod == keyEventModWithoutMod &&
-		((KMOD_CTRL & keyEventMod) != KMOD_NONE || (mod1 = (SDL_Keymod)(KMOD_CTRL & keyMod)) == KMOD_NONE) &&
-		((KMOD_SHIFT & keyEventMod) != KMOD_NONE || (mod2 = (SDL_Keymod)(KMOD_SHIFT & keyMod)) == KMOD_NONE) &&
-		((KMOD_ALT & keyEventMod) != KMOD_NONE || (mod3 = (SDL_Keymod)(KMOD_ALT & keyMod)) == KMOD_NONE) &&
+		((KMOD_CTRL & keyEventMod) != KMOD_NONE	 ||	mod1 == KMOD_NONE) &&
+		((KMOD_SHIFT & keyEventMod) != KMOD_NONE || mod2 == KMOD_NONE) &&
+		((KMOD_ALT & keyEventMod) != KMOD_NONE	 ||	mod3 == KMOD_NONE) &&
 		(mod1 != 0 || mod2 != 0 || mod3 != 0));
 }
 
@@ -2126,8 +2146,11 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	keyLabel = SDL_GetKeyName(key->keysym.sym);
 	if (keyLabel.size() > 2) {
 		size_t index;
-		if ((index = keyLabel.find("Keypad")) != std::string::npos) {
-			keyLabel ="KP" + keyLabel.substr(keyLabel.size() - 1, 1);
+		if (keyLabel == "Return") {
+			keyLabel = "Ret";
+		}
+		else if ((index = keyLabel.find("Keypad")) != std::string::npos) {
+			keyLabel = "KP" + keyLabel.substr(keyLabel.size() - 1, 1);
 		}
 		else {
 			keyLabel = keyLabel.substr(0, 2) + keyLabel.back();

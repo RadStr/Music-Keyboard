@@ -9,17 +9,8 @@
 // TODO: In future maybe have option to set font, for this to be possible we will need to look for the ttf files in the OS specific directories
 class Label {
 public:
-	Label() {
-		this->text = "";
-		this->fontSize = DEFAULT_FONT_SIZE;
-		this->font = TTF_OpenFont("arial.ttf", fontSize);
-	}
-
-	Label(const std::string &text) {
-		this->text = text;
-		this->fontSize = DEFAULT_FONT_SIZE;
-		this->font = TTF_OpenFont("arial.ttf", fontSize);	
-	}
+	Label();
+	Label(const std::string &text);
 
 	TTF_Font *font;
 	int fontSize;
@@ -57,8 +48,8 @@ public:
 
 class Textbox : public Label {
 public:
-	Textbox() : Label() { }
-	Textbox(const std::string &text) : Label(text) { }
+	Textbox();
+	Textbox(const std::string &text);
 
 	// Returns true if the text should be rendered
 	// Changes the enterPressed variable to true if enter was pressed

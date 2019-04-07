@@ -65,7 +65,8 @@ public:
 	void initKey();
 
 	// Initialize the audioConvert.buf with the audio from audio file given in filename. The buffer is in the desiredAudioSpec
-	void setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec);
+	// Returns true if the buffer was initialized, false if not
+	bool setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec);
 
 	// Frees the resources associated with the key
 	void freeKey();
