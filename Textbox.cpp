@@ -1,5 +1,22 @@
 #include "Textbox.h"
 
+
+Label::Label() {
+	this->text = "";
+	this->fontSize = DEFAULT_FONT_SIZE;
+	this->font = TTF_OpenFont("arial.ttf", fontSize);
+}
+
+Label::Label(const std::string &text) {
+	this->text = text;
+	this->fontSize = DEFAULT_FONT_SIZE;
+	this->font = TTF_OpenFont("arial.ttf", fontSize);
+}
+
+
+Textbox::Textbox() : Label() { }
+Textbox::Textbox(const std::string &text) : Label(text) { }
+
 void Label::freeLabel() {
 	TTF_CloseFont(font);
 	font = NULL;

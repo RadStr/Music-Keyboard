@@ -41,7 +41,7 @@ bool Button::checkMouseClick(const SDL_MouseButtonEvent &event) {
 }
 
 
-void Key::setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec) {
+bool Key::setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec) {
 	this->isDefaultSound = false;
 	Uint8 *audioBuffer = NULL;
 	Uint32 audioBufferLen = 0;
@@ -68,10 +68,13 @@ void Key::setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec
 			else {
 				std::free(spec);
 			}
-		}		
+		}	
+
+		return true;
 	}
 	else {
 		std::free(specForFree);
+		return false;
 	}
 }
 
