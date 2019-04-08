@@ -1,8 +1,10 @@
 test\configFiles\configWin.txt
 test\configFiles\config2Win.txt
+test\configFiles\config3Win.txt
 
 test/configFiles/configUnix.txt
 test/configFiles/config2Unix.txt
+test/configFiles/config3Unix.txt
 
 
 
