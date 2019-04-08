@@ -1,5 +1,3 @@
-// https://www.youtube.com/watch?v=QQzAHcojEKg
-
 // The biggest problem this software has, is the limitaion of hardware, more specifically the anti-ghosting mechanism, which blocks combination of certain
 // keys to be registered, because they may produce some next key which wasn't pressed. 
 // For example on my keyboard when the keys A,S,W are pressed at the same moment, keyboard registers them all.

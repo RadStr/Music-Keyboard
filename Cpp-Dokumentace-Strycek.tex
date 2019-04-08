@@ -19,14 +19,16 @@
 	
 	\newpage
 	\subsection{Popis souborů a adresářů}
-	Stáhneme projekt z repository. Ihned vidíme složky lib, test a include a zdrojové soubory programu a soubory arial.ttf a VS\_CMD\_COMPILATION.txt a soubory k dokumentaci. Složka GenerateSource obsahuje kód, který jsem použil ke generování defaultního ovládání.
+	Stáhneme projekt z repository. Ihned vidíme složky lib, test a include a zdrojové soubory programu a soubory arial.ttf a VS\_CMD\_COMPILATION.txt a soubory k dokumentaci. Složka GenerateSource obsahuje soubor cppGenCodeForKeys.cpp s kódem, který jsem použil ke generování defaultního ovládání. Viz. metoda defaultInitControlKeys v souboru Keyboard.cpp.
+	\\
 	\\
 	Složka lib obsahuje všechny .lib soubory nutné pro kompilaci.
 	\\
+	\\
 	Složka include obsahuje všechny hlavičkové soubory knihoven SDL2 a SDL\_ttf.
 	\\
-	Ve složce test jsou složky audioFiles, configFiles a soubor testPaths.txt.
 	\\
+	Ve složce test jsou složky audioFiles, configFiles a soubor testPaths.txt.
 	\\
 	Soubor testPaths.txt obsahuje všechny relativní cesty k souborům, aby je jen stačilo zkopírovat do textboxů. Jsou tam jak unixové tak windowsové varianty cest. Například cestu k adresáři audioFiles můžeme zkopírovat do 3. textboxu a vyzkoušet, jestli se na první 4 klávesy správně nahraje audio ze souborů.
 	\\
@@ -140,9 +142,9 @@
 	Předpona KP říká, že se jedná o keypad klávesy (ty napravo na klávesnici).
 	\\
 	\\
-	Dlouhé klávesy se vypíší tak, že se napíše 1. a 2. písmeno jména klávesy a pak poslední. To je protože 3 písmena jsou tak, akorát aby se to vešlo jako text pod (resp. nad) klávesy. Tedy například backspace je u kláves psaný jako BAE. Více v sekci 7 Možná budoucí rozšíření, část 7.8 Zdokonalení jmen kláves.
+	Dlouhé klávesy se vypíší tak, že se napíše 1. a 2. písmeno jména klávesy a pak poslední. Protože 3 písmena jsou tak, akorát aby se to vešlo jako text pod (resp. nad) klávesy. Tedy například backspace je u kláves psaný jako BAE. Více v sekci 7 Možná budoucí rozšíření, část 7.8 Zdokonalení jmen kláves.
 	\\
-	Výjimkou je klávesa enter (resp. levý enter) ten je označený labelem Ret (protože jméno klávesy je return)-
+	Výjimkou je klávesa enter (resp. levý enter) ten je označený labelem Ret (protože jméno klávesy je return).
 	\\
 	\\
 	Klávesy lze ovládat i myší.
@@ -156,10 +158,10 @@
  U formátu .keys to tak dobře nefunguje, ale formát keys je spíše určený k tomu, aby se uživatel podíval, jak hrál dříve nahranou píseň. Případně si "napsal" vlastní a tu si pak i nahrál jednodušše tak, že spustí nahrávání a poté do 1. textboxu zadá odpovídající .keys soubor stiskne enter a po konci přehrání ukončí nahrávání. 
 \\
 \\
-2. textbox: Obsahuje cestu, kam se mají ukládat nahrávky (společně se jménem, bez koncovky).
+2. textbox: Obsahuje cestu, kam se mají ukládat nahrávky (společně se jménem souboru, bez koncovky).
 \\
 \\
-3. textbox: Obsahuje cestu k adresáři, ze které se vyberou .wav soubory a postupně se jimi zleva doprava inicializují klávesy. Neinicializované klávesy zůstanou nezměněné.
+3. textbox: Obsahuje cestu k adresáři, ze kterého se vyberou .wav soubory a postupně se jimi zleva doprava inicializují klávesy. Neinicializované klávesy zůstanou nezměněné.
 \\
 \\
 4. textbox: Měl by obsahovat cestu ke config souboru (i s názvem). Po stisknutí enteru se načte config soubor a provedou se odpovídající inicializace.
@@ -203,25 +205,25 @@
 	Každá následující řádka má takovýto formát (MEZERA značí " ", čísla kláves jsou od 1 až do čísla na 1. řádce):
 	\\
 	\\
-	Číslo klávesy MEZERA modifikátory klávesy (oddělené +) MEZERA klávesa pro ovládání MEZERA soubor s audiem. (případně DEFAULT pokud chceme generovat defaultní tón).
+	Číslo klávesy MEZERA modifikátory klávesy (oddělené +) MEZERA klávesa pro ovládání MEZERA soubor s audiem. (Případně DEFAULT pokud chceme generovat defaultní tón).
 	\\
 	\\
-	Klávesy pro ovládání a modifikátory prozatím musí být psané pouze velkými písmeny (Klávesy abecedy: a,b,c, ... mohou být psány i malym). Speciální hodnoty jsou SPACE, BACKSPACE, INSERT, HOME, PAGEUP, DELETE, END, PAGEDOWN, dále šipky: UP, DOWN, LEFT, RIGHT. Tlačítka na keypadu jsou formátu jméno\_klávesyKP, tedy například 0 na keypadu má v config souboru tvar 0KP. F klávesy klasicky, např. F11 atd. Čísla pod F klávesami klasicky, tedy např. pro číslo 0 stačí napsat 0.
+	Klávesy pro ovládání a modifikátory prozatím musí být psané pouze velkými písmeny (Klávesy abecedy: a, b, c, ... mohou být psány i malým). Speciální hodnoty jsou SPACE, BACKSPACE, INSERT, HOME, PAGEUP, DELETE, END, PAGEDOWN, dále šipky: UP, DOWN, LEFT, RIGHT. Tlačítka na keypadu jsou formátu jméno\_klávesyKP, tedy například 0 na keypadu má v config souboru tvar 0KP. F klávesy klasicky, např. F11 atd. Čísla pod F klávesami klasicky, tedy např. pro číslo 0 stačí napsat 0.
 	\\
 	Klávesy u enteru, například ";" je v config souboru jako ;. Tyto klávesy odpovídají znakům na anglické klávesnici. 
 	\\
 	\\
-	Předpona KP je pouze u čísel a enteru. Pro bližší info se stačí podívat do souboru Keyboard.cpp na metodu Keyboard::setControlForKeyFromConfigFile, kde se parsuje token klávesy.	 
+	Přípona KP je pouze u čísel a enteru. Pro bližší info se stačí podívat do souboru Keyboard.cpp na metodu setControlForKeyFromConfigFile, kde se parsuje token klávesy.	 
 	\\
 	\\
 	Číslo klávesy 0 je číslo nahrávací klávesy, u něho poslední token můžeme vynechat. Pokud klávesa 0 chybí, tak se inicializuje defaultním ovládáním.
 	\\
 	\\
 	Čísla musí být psaná vzestupně, totiž veškerá vynechaná čísla se inicializují defaultním tónem a defaultním ovládáním.
-	Pokud je číslo klávesy na následující řádce nižší než číslo klávesy na současné řádce, tak program spadne.
+	Pokud je číslo klávesy na následující řádce nižší nebo stejné jako číslo klávesy na současné řádce, tak program spadne.
 	\\
 	\\
-	Pokud je v config souboru vynechaná řádka, tak se to bere tak jako by na té řádce bylo číslo klávesy, která by měla následovat po předchozí a inicializuje se defaultním audiem a ovládáním.
+	Pokud je v config souboru prázdná řádka, tak se to bere tak jako by na té řádce bylo číslo klávesy, která by měla následovat po předchozí a inicializuje se defaultním audiem a ovládáním.
 
 	\newpage
 	\subsubsection{Příklad config souboru}
@@ -237,6 +239,9 @@
 	1 ALT+CTRL+NUM+CAPS+SHIFT B D:\textbackslash CestaKSouboru \textbackslash JménoSouboru
 	\\
 	20 NUM C DEFAULT
+	
+	\subsubsection{Defaultní ovládání}
+	Defaultní ovládání je to, které je přiřazené klávesám při zapnutí programu. Viz. metoda defaultInitControlKeys v souboru Keyboard.cpp. Tento kód byl vygenerovaný souborem cppGenCodeForKeys.cpp ve složce GenerateSource.
 	
 	\newpage
 	\subsection{Popis formátu souboru .keys}
@@ -265,7 +270,7 @@
 	
 	\newpage
 	\maketitle\section{Použité knihovny}
-	Použil jsem knihovny SDL2 a SDL\_ttf. Knihovna SDL2 zajišťuje grafické rozhraní a práci se zvukem. Knihovna SDL\_ttf slouží pro zobrazování textů na obrazovku. Defaultním fontem je arial, jehož ttf soubor by měl být přiložený přímo ve složce s .exe souborem.
+	Použil jsem knihovny SDL2 a SDL\_ttf. Knihovna SDL2 zajišťuje grafické rozhraní a práci se zvukem. Knihovna SDL\_ttf slouží pro zobrazování textů na obrazovku. Defaultním fontem je arial, jehož ttf soubor by měl být přiložený přímo ve složce s .exe souborem, resp. ve složce s  zdrojovými soubory.
 	
 	\newpage
 	\maketitle\section{Technické detaily, problémy a varování}
@@ -298,7 +303,7 @@
 	\subsection{Přidání dalších funkcí}
 	Přidat úplně nové funkce. Například že přehrávání souboru .keys bude vypadat, tak jako to vypadá u podobných klávesových programů, tedy že budou padat různě dlouhé obdelníky signalizující, jak dlouho bude klávesa hrát a kdy.
 	\\
-	Případně by podobně šlo naimplementovat i něco na styl hry guitar hero, tedy že by takto padaly obdelníky a uživatel by měl za úkol je co nejpřesněji hrát.
+	Případně by podobně šlo naimplementovat i něco na styl hry Guitar hero, tedy že by takto padaly obdelníky a uživatel by měl za úkol je co nejpřesněji hrát.
 		\subsubsection{Vlastní font}
 	Možnost nastavit si vlastní font. Pro implementaci by jen stačilo najít, kde má operační systém uloženy .ttf soubory a přidat textbox, kam by se jméno fontu zadalo. (ideálně okno, kde by se vybralo z dostupných fontů)
 	\subsubsection{Trénování tónů}
@@ -308,9 +313,9 @@
 	\subsection{Přidat modifikaci audia (zvukové efekty)}
 	Například: Držením klávesy alt by se hrané audio změnilo nějakým efektem. Třeba že by hrané audio bylo hlubší, "rozmazanější", atd. Případně toho docílit pohyby myší.
 	\subsection{Přidat možnost výběru formátu audia}
-	V budoucnu by bylo dobré, aby si uživatel mohl vybrat, jaký audio formát bude program používat (tedy v jakém formátu bude přehrávat audio soubory jak z kláves, tak z textboxu). Ale pozor ne všechny formáty se chovají úplně dobře, například na mém počítači formát s 16bitovými unsigned samply způsobuje tolik praskání, že je hraní neposlouchatelné.
+	V budoucnu by bylo dobré, aby si uživatel mohl vybrat, jaký audio formát bude program používat (tedy v jakém formátu bude přehrávat audio soubory jak z kláves, tak z textboxu a tento formát i určuje formát výstupního wav souboru v nahrávání). Ale pozor ne všechny formáty se chovají úplně dobře, například na mém počítači formát s 16bitovými unsigned samply způsobuje tolik praskání, že je hraní neposlouchatelné.
 	\\
-	Nyní je defaultní audio formát : 
+	Nyní je defaultní audio formát: 
 	\\
 	2 kanály, 16 bitové signed samply, 22050 Hz frekvence.
 	\\
@@ -318,7 +323,7 @@
 	
 	\newpage
 	\subsection{Zdokonalení jmen kláves}
-	Dělat jména kláves tak, aby to dávalo největší smysl. Z hlediska implementace to je pouze udělat velký switch a na základě jména vybrat 3 písmena, která vyobrazíme. Například místo space, kde se teď píše Spe psát třeba Spc nebo Spa.
+	Dělat jména kláves tak, aby to dávalo největší smysl. Z hlediska implementace to pouze znamená udělat velký switch a na základě jména vybrat 3 písmena, která vyobrazíme. Například místo space, kde se teď píše Spe psát třeba Spc nebo Spa.
 	\subsection{Důvod proč tato rozšíření chybí}
 	Celkově to nejsou až tak časově náročná rozšíření, ale bohužel na ně teď nemám příliš času.
 \end{document}

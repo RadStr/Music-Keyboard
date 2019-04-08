@@ -13,3 +13,5 @@
 12 NOMOD ENTER test/audioFiles/Alesis-Fusion-Clean-Guitar-C3.wav
 13 NOMOD ENTERKP test/audioFiles/Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
 14 NOMOD + test/audioFiles/Alesis-Fusion-Acoustic-Bass-C2.wav
+15 NOMOD UP test/audioFiles/Alesis-Fusion-Acoustic-Bass-C2.wav
+16 NOMOD DOWN test/audioFiles/Alesis-Fusion-Acoustic-Bass-C2.wav
