@@ -1,0 +1,324 @@
+\documentclass[12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsfonts}
+\title{Programování v C++ \\ NPRG041 \\ ZS 2018/2019 \\ Dokumentace \\ Zápočtový program - Klávesy}
+\author{Radek Strýček}
+\date{07.04.2019}
+\begin{document}
+	
+	\maketitle\section{Základní poznámky}
+	Některé věci nejsou řešeny úplně ideálně, ale program podporuje všechny funkce, které se od něho očekávají.
+	\\
+	\\
+	Program podporuje pouze audio soubory s koncovkou .wav, resp. wav soubory které mají zvuková data bez komprese. (SDL má funkce jen pro načtení .wav souboru).
+	
+	
+	\newpage
+	\maketitle\section{Kompilace}
+	Na počítači nemám nainstalovaný jiný kompilátor než ten z visual studia, takže tato sekce obsahuje jen kompilaci pro tento kompilátor, protože pro žádný jiný bych nemohl vyzkoušet, jestli postup funguje.
+	
+	\newpage
+	\subsection{Popis souborů a adresářů}
+	Stáhneme projekt z repository. Ihned vidíme složky lib, test a include a zdrojové soubory programu a soubory arial.ttf a VS\_CMD\_COMPILATION.txt a soubory k dokumentaci. Složka GenerateSource obsahuje kód, který jsem použil ke generování defaultního ovládání.
+	\\
+	Složka lib obsahuje všechny .lib soubory nutné pro kompilaci.
+	\\
+	Složka include obsahuje všechny hlavičkové soubory knihoven SDL2 a SDL\_ttf.
+	\\
+	Ve složce test jsou složky audioFiles, configFiles a soubor testPaths.txt.
+	\\
+	\\
+	Soubor testPaths.txt obsahuje všechny relativní cesty k souborům, aby je jen stačilo zkopírovat do textboxů. Jsou tam jak unixové tak windowsové varianty cest. Například cestu k adresáři audioFiles můžeme zkopírovat do 3. textboxu a vyzkoušet, jestli se na první 4 klávesy správně nahraje audio ze souborů.
+	\\
+	\\
+	Složka audioFiles obsahuje .wav a .keys soubory pro testování. Soubor soundSources.txt obsahuje odkazy, ze kterých byly získány .wav soubory.
+	\\
+	\\
+	Složka configFiles obsahuje 3 config soubory: configWin(Unix).txt a config2Win(Unix).txt. Oba soubory jen inicializují 1., 3., 5. a 7. klávesu wav soubory ze složky audioFiles a přiřadí jim ovládání pomocí kláves F1, F2, F3, F4. Na posledních 2 klávesách se změní ovládání a ostatní klávesy jsou inicializovány defaultně. Soubory se od sebe liší jen v tom jaká ze 4 kláves má jaký zvuk a v ovládání posledních 2 kláves a ještě v tom, že config.txt navíc obsahuje i inicializaci nahrávací klávesy, zatímco config2.txt nikoliv.
+	\\
+	Soubor config3Win(Unix).txt obsahuje většinu zajímavějších kláves pro inicializaci.
+	\\
+	\\
+	Varování: Soubory s Win na konci používají windows oddělovače cest a ty s Unix unixovské oddělovače cest.
+	
+	\newpage
+	\subsection{Kompilace pomocí Developer Command Prompt for VS}
+	Nyní k samotné kompilaci. Oteveřeme Developer command prompt for VS, kterou na Windows 10 najdeme například tak, že otevřeme start, pod písmenem V najdeme složku Visual Studio 2017 a otevřeme Developer Command Prompt for VS 2017. Jakmile jí otevřeme tak pomocí příkazu cd se přesuneme do adresáře, kde je soubor VS\_CMD\_COMPILATION.txt. Poté otevřeme tento soubor a zkopírujeme jeho obsah do otevřené příkazové řádky a program by se měl zkompilovat. Výsledný soubor se bude jmenovat prog.exe. 
+	\\
+	\\
+	Všechny dll a lib soubory jsou pro x86.
+	
+	\subsubsection{Popis kompilačního příkazu}
+	Příkaz cl říká, že chceme kompilovat a za ním následují:
+	\\
+	\\
+	Zdrojové soubory programu.
+	\\
+	\\
+	/I include říká, kde nalezneme hlavičky knihovních souborů (Odkud je máme includovat).
+	\\
+	\\
+	/link /LIBPATH:"lib" SDL2.lib SDL2main.lib SDL2\_ttf.lib říká s jakými soubory z knihovny máme linkovat zdrojové soubory programu.
+	\\
+	\\
+	/SUBSYSTEM:WINDOWS způsobí, že v aplikaci nebude vidět konzolové okno.
+	\\
+	\\
+	/out:prog.exe určuje jméno výstupního souboru.
+
+	\newpage  
+	\maketitle\section{Programátorská dokumentace}
+	\subsection{Implementované funkce}
+	Program podporuje přehrávání kláves jak pomocí myši tak i klávesnice. 
+	\\
+	\\
+	Umožňuje inicializování jednotlivých kláves.
+	\\
+	\\
+	Umožňuje hudbu nahrávat a následně i přehrávat, dokonce i do přehrávané hudby hrát. 
+	\\
+	\\
+	Umožňuje klávesy inicializovat pomocí konfiguračního souboru. Konfigurační soubor budu v textu nazývat jako config soubor.
+	\\
+	\\
+	Umožňuje inicializovat zvuky pro klávesy zadáním adresáře.
+	\\
+	\\
+	Přehrávání souboru s koncovkou .keys umožňuje hudbu nejen slyšet, ale i vidět přes jaké klávesy se hraje.
+	
+	\newpage
+	\subsection{Objektový návrh}
+	Hlavní třídou je třída Keyboard. Ta představuje objekt kláves, na které hrajeme. Viz. Keyboard.h
+	\\	
+	\\
+	Třída Key představuje jednotlivé klávesy. Třída Key dědí od třídy Button. Viz. Key.h
+	\\
+	\\
+	Třída Textbox dědí od třídy Label. Viz. Textbox.h
+	\\
+	\\
+	Třída KeySetWindow představuje okno, které se vytvoří při nastavování klávesy, tedy při kliknutí pravým tlačítkem myši na klávesu. Viz. KeySetWindow.h
+	\\
+	\\
+	Soubor Main.cpp obsahuje pouze metodu main a ta zajišťuje vytvoření okna a vytvoření instance třídy Keyboard.
+	\\
+	\\ 
+	Třída KeyboardParallel dědí od třídy Keyboard a představovala pokus o vícevláknovou aplikaci (nakonec jsem ale nedokončil, viz. sekce 7 Možná budoucí rozšíření, 7.2 Vykreslování v jiném vlákně). Najdeme jí ve třídě Keyboard.h
+	
+	\newpage
+	\subsection{Implementační detaily}
+	Program běží v nekonečné smyčce, ve které kontroluje eventy a na jejich základě provádí odpovídající akce.
+	\\
+	 Eventy jsou například zvětšování/zmenšování okna, zavření okna (To způsobí ukončení programu a uvolnění zdrojů) a pak samozřejmě stisknutí myši a kláves na klávesnici.
+	\\
+	\\
+	K přehrávání zvuků se využívá callback funkce, která je SDL knihovnou pravidelně volána. Tato funkce očekává, že při jejím zavolání se naplní buffer, který se následně přehraje. Tento buffer naplníme podle stisknutých kláves. Pro nahrávání jen tento buffer kopírujeme do jiného pole až do doby, kdy uživatel nevypne nahrávání, pak se obsah nahraje do souboru a pole se uvolní. 
+	\\ 
+	\\
+	Z nějakého důvodu je někdy při puštění klávesy slyšet praskání, pro toto jsem napsal funkci reduceCrackling, která postupně sníží hodnoty samplů v bufferu na hodnotu ticha. Protože podle mě je praskání zapříčiněno náhlým skokem v hodnotách samplů. Je možné, že je problém v něčem jiném, ale tato metoda ve vetšině případu eliminovala problém s praskáním.
+	
+	\newpage  
+	\maketitle\section{Uživatelská dokumentace}
+	\subsection{Textboxy}
+	Kliknutím na textbox se typicky změní jeho barva.
+	\\
+	U textboxů do kterých lze doplňovat text, může uživatel použít ctrl + c a ctrl + v pro kopírování. Pokud se jedná o textboxy, od kterých se očekává nějaká akce (například přehrát soubor), tak tato akce nastane po stisknutí enteru na tomto textboxu. Po stisknutí enteru akci nelze vrátit.
+	\\
+	 Pokud uživatel klikl na textbox omylem a nestiskl enter, tak akci lze zrušit kliknutím myší kamkoliv mimo textbox. 
+	\subsection{Popis oken}
+	\subsubsection{Hlavní okno}
+	Ihned po spuštění se zobrazí klávesy. Lze na ně okamžitě hrát. Jednotlivé klávesy mají přiřazené defaultní zvuky a defaultní klávesy pro ovládání. 
+	\\
+	\\
+	Klávesy mají u sebe červenou barvou napsané číslo klávesy a poté bílou barvou informace o ovládání (Jakou klávesou s jakými modifikátory se klávesa ovládá). 
+	\\
+	Bílé klávesy mají text pod klávesami a nejdříve jsou psané modifikátory a až úplně nejníž najdeme samotnou klávesu pro ovládání.
+	\\
+	Černé klávesy mají text nad sebou, kde modifikátory jsou napsané dole, samotná klávesa nahoře. 
+	\\
+	\\
+	Předpona KP říká, že se jedná o keypad klávesy (ty napravo na klávesnici).
+	\\
+	\\
+	Dlouhé klávesy se vypíší tak, že se napíše 1. a 2. písmeno jména klávesy a pak poslední. To je protože 3 písmena jsou tak, akorát aby se to vešlo jako text pod (resp. nad) klávesy. Tedy například backspace je u kláves psaný jako BAE. Více v sekci 7 Možná budoucí rozšíření, část 7.8 Zdokonalení jmen kláves.
+	\\
+	Výjimkou je klávesa enter (resp. levý enter) ten je označený labelem Ret (protože jméno klávesy je return)-
+	\\
+	\\
+	Klávesy lze ovládat i myší.
+	\\
+	\\
+	Klávesa určená pro zapnutí a vypnutí nahrávání funguje přes mačkání klávesy místo držení, tedy zmáčknutím klávesy vypneme/zapneme nahrávání.
+
+	\subsubsection{Textboxy v hlavním okně}
+1. textbox: Obsahuje cestu společně se jménem k náhravce, která se má přehrát. Pokud má koncovku .wav tak lze do přehrávání hrát a dokonce, lze i zapnout nahrávání a nahrát audio stopu z .wav společně s hraním na klávesy, takže lze přímo v programu poměrně snadno nahrát několik vrstev písně.
+\\
+ U formátu .keys to tak dobře nefunguje, ale formát keys je spíše určený k tomu, aby se uživatel podíval, jak hrál dříve nahranou píseň. Případně si "napsal" vlastní a tu si pak i nahrál jednodušše tak, že spustí nahrávání a poté do 1. textboxu zadá odpovídající .keys soubor stiskne enter a po konci přehrání ukončí nahrávání. 
+\\
+\\
+2. textbox: Obsahuje cestu, kam se mají ukládat nahrávky (společně se jménem, bez koncovky).
+\\
+\\
+3. textbox: Obsahuje cestu k adresáři, ze které se vyberou .wav soubory a postupně se jimi zleva doprava inicializují klávesy. Neinicializované klávesy zůstanou nezměněné.
+\\
+\\
+4. textbox: Měl by obsahovat cestu ke config souboru (i s názvem). Po stisknutí enteru se načte config soubor a provedou se odpovídající inicializace.
+
+	\subsubsection{Okno pro nastavení klávesy} 
+	Vrchní polovina okna určuje ovládání klávesy a spodní polovina okna je textbox, kam zadáme cestu k souboru s audiem, který chceme dané klávese přiřadit.
+	\\
+	\\
+	Informace k ovládání jsou v sekci 4.4 Ovládání.
+	
+	\newpage
+	\subsection{Nahrávání}
+	Nahrávací klávesa je v okně vlevo nahoře.
+	\\
+	Nahrávání vytvoří 2 soubory, .wav a .keys. Kde .wav obsahuje audio, které vzniklo při nahrávání. Soubor s koncovkou .keys obsahuje jaké klávesy se stiskly (pustily) v jaký čas při nahrávání, takže se lze v budoucnu podívat a poslechnout si, jak se nahrávka hraje a zní. Resp. jak zní se současnými klávesami. (Totiž přehrávání souboru .keys přehrává právě přiřazené zvuky ke klávesám a ne zvuky, které byly přiřazeny v době nahrávání.)
+	\\
+	Soubor typu .keys tedy lze využít i tak, že si uživatel hudbu napíše, bez toho aby jí musel sám hrát. 
+	 
+	\newpage
+	\subsection{Ovládání}
+	Poznámka k ovládání: Pokud má více kláves stejné tlačítko pro ovládání i se stejnými modifikátory, tak při jeho stisknutí začne hrát pouze klávesa nejvíce nalevo.
+	\\
+	\\
+	Kliknutím na klávesu pravým tlačítkem myši vytvoříme nové okno, kde lze změnit ovládání klávesy a zvuk, který klávesa vydává. Změnu klávesy pro ovládání provedeme tak, že klikneme na vrchní polovinu nového okna levým tlačítkem a zmáčkneme na klávesnici novou klávesu pro ovládání klávesy (Pozor na současné modifikátory). V dolní části okna je textbox, kam můžeme zadat cestu k souboru, ze kterého načteme nové audio pro klávesu. Zde volbu potvrdíme enterem.
+	\\
+	\\
+	Jakmile změnu ovládání tlačítka provedeme, tak jí nelze vrátit zpět. Změna audia proběhne ihned po stisknutí enteru na spodním textboxu. Pokud soubor neexistoval, tak audio zůstane stejné. 
+	\\
+	Změna ovládání klávesy se hned projeví na okně s klávesami, takže se můžeme okamžitě podívat, jak jsme ovládání změnili.
+	\\
+	Po dokončení úprav stačí zmáčknout křížek (zavřít okno) a můžeme se zase věnovat hraní. Lze před zavřením provést kolik úprav chceme, tedy 0 až nekonečně mnoho. Když neprovedeme žádnou, tak se klávesa nezmění.
+	\\
+	\\
+	Poznámka: Pokud je otevřené okno pro nastavení klávesy, tak okno s klávesami nereaguje na hraní, ale lze na něho klikat, měnit jeho velikost a i ho zavřít. Zavřením okna s klávesami ukončíme celou aplikaci.
+	
+	\newpage
+	\subsection{Popis config souboru}
+	Na první řádce je počet kláves (bez nahrávací klávesy).
+	\\
+	Číslo na 1. řádce musí být menší nebo rovno hodnotě makra MAX\_KEYS, která nyní odpovídá hodnotě 88, tedy počtu kláves na klavíru. 
+	Každá následující řádka má takovýto formát (MEZERA značí " ", čísla kláves jsou od 1 až do čísla na 1. řádce):
+	\\
+	\\
+	Číslo klávesy MEZERA modifikátory klávesy (oddělené +) MEZERA klávesa pro ovládání MEZERA soubor s audiem. (případně DEFAULT pokud chceme generovat defaultní tón).
+	\\
+	\\
+	Klávesy pro ovládání a modifikátory prozatím musí být psané pouze velkými písmeny (Klávesy abecedy: a,b,c, ... mohou být psány i malym). Speciální hodnoty jsou SPACE, BACKSPACE, INSERT, HOME, PAGEUP, DELETE, END, PAGEDOWN, dále šipky: UP, DOWN, LEFT, RIGHT. Tlačítka na keypadu jsou formátu jméno\_klávesyKP, tedy například 0 na keypadu má v config souboru tvar 0KP. F klávesy klasicky, např. F11 atd. Čísla pod F klávesami klasicky, tedy např. pro číslo 0 stačí napsat 0.
+	\\
+	Klávesy u enteru, například ";" je v config souboru jako ;. Tyto klávesy odpovídají znakům na anglické klávesnici. 
+	\\
+	\\
+	Předpona KP je pouze u čísel a enteru. Pro bližší info se stačí podívat do souboru Keyboard.cpp na metodu Keyboard::setControlForKeyFromConfigFile, kde se parsuje token klávesy.	 
+	\\
+	\\
+	Číslo klávesy 0 je číslo nahrávací klávesy, u něho poslední token můžeme vynechat. Pokud klávesa 0 chybí, tak se inicializuje defaultním ovládáním.
+	\\
+	\\
+	Čísla musí být psaná vzestupně, totiž veškerá vynechaná čísla se inicializují defaultním tónem a defaultním ovládáním.
+	Pokud je číslo klávesy na následující řádce nižší než číslo klávesy na současné řádce, tak program spadne.
+	\\
+	\\
+	Pokud je v config souboru vynechaná řádka, tak se to bere tak jako by na té řádce bylo číslo klávesy, která by měla následovat po předchozí a inicializuje se defaultním audiem a ovládáním.
+
+	\newpage
+	\subsubsection{Příklad config souboru}
+	Klávesa 1 v tomto příkladu obsahuje všechny podporované modifikátory. Zatímco klávesa 0 (nahrávací klávesa) nemá žádný modifikátor.
+	\\
+	Následující příklad config souboru vytvoří klávesy s 30 klávesami + 1 nahrávací. Kde klávesa 1 je inicializovaná audiem ze souboru formátu .wav a všechny ostatní inicializovány defaultním tónem. Všechny klávesy až na 1. a 20. a nahrávací klávesu jsou inicializovány defaultním ovládáním.
+	\\
+	\\
+	30
+	\\
+	0 NOMOD A
+	\\
+	1 ALT+CTRL+NUM+CAPS+SHIFT B D:\textbackslash CestaKSouboru \textbackslash JménoSouboru
+	\\
+	20 NUM C DEFAULT
+	
+	\newpage
+	\subsection{Popis formátu souboru .keys}
+	1 řádka představuje 1 event a obsahuje všechny potřebné informace k přehrání. Tedy timestamp v ms (kdy event nastal), a na jaké klávese byl event vykonán (ID klávesy, indexované od 1, tedy 1 je 1. klávesa zleva) a jaký to byl event (stisknutí = 0 nebo puštění = 1).
+	\\
+	\\
+	Jednotlivé části na řádce jsou odděleny mezerami.
+	\\
+	\\
+	Timestampy mají být v souboru vzestupně, tj. timestamp na následující řádce má být aspoň takový jako ten na současné řádce.
+	
+	\subsubsection{Příklad souboru .keys}
+	Tento příklad hraje 1. klávesu po dobu 2 sekund hned od začátku a 3. klávesa začne hrát v čase 1 sekunda po dobu 10 sekund.
+	\\
+	\\ 
+	0 1 0
+	\\
+	1000 3 0
+	\\
+	2000 1 1
+	\\
+	11000 3 1
+	
+	\subsection{Doporučení}
+	Doporučuji používat config soubor, protože narozdíl od inicializace jednotlivých kláves (pomocí pravého tlačítka myši) ho lze použít i při příštím spuštění.
+	
+	\newpage
+	\maketitle\section{Použité knihovny}
+	Použil jsem knihovny SDL2 a SDL\_ttf. Knihovna SDL2 zajišťuje grafické rozhraní a práci se zvukem. Knihovna SDL\_ttf slouží pro zobrazování textů na obrazovku. Defaultním fontem je arial, jehož ttf soubor by měl být přiložený přímo ve složce s .exe souborem.
+	
+	\newpage
+	\maketitle\section{Technické detaily, problémy a varování}
+	\subsection{Varování}	
+	Klávesa F12 způsobí pád aplikace.
+	\\
+	Defaultní tóny na klávesách hodně napravo (tedy ty hodně vysoké), mohou být dost nepříjemné při vysoké hlasitosti, takže je lepší si před jejich hraním nejdříve snížit hlasitost.
+		
+	\subsection{Technické detaily a problémy}
+	\subsubsection{Mixování defaultních tónů}
+	Výsledek mixování defaultně generovaných tónů zní poněkud zvláštně (Defaultní tóny celkově nezní moc ideálně ani samostatně). Mixování by se teoreticky mohlo spravit použitím knihovy SDL\_mixer, ale nejsem si jistý. Protože například při mixování několika wav souborů zní výsledek tak, jak by měl.
+	
+	\subsubsection{Problémy s klávesnicí}
+	Program je limitovaný kvalitou klávesnice. Výrobci klávesnic řeší problém tzv. ghost notes, tj. že při stisknutí určité kombinace blízkých kláves může nastat situace, že se zaregistruje stiknutí nějaké další klávesy, která ve skutečnosti nebyla stisknutá. Většina výrobců klávesnic tento problém řeší tak, že pokud je taková kombinace kláves stisknutá, tak se klávesnice "zablokuje", tedy buď se nezaregistruje žádná klávesa nebo jen nějaké a to je pro tento program docela problém, protože tím pádem určité kombinace kláves nejdou zahrát. To už si tedy musí přizpůsobit uživatel. Například config souborem, nebo třeba i tak, že skladbu nahraje na víckrát, to program umožňuje (už bylo zmíněno výše).
+	
+	
+	\newpage
+	\maketitle\section{Možná budoucí rozšíření}	
+	Tato sekce obsahuje rozšíření, která možná někdy v budoucnu doimplementuji.
+	\\
+	Rozšíření je spousta, toto jsou hlavní, co mě napadly.
+	\subsection{Jiné mixování audia}
+	Použít knihovnu SDL\_mixer pro mixování. Protože je i v dokumentaci SDL psáno, že metoda SDL\_MixAudioFormat by se neměla používat na mixování více zdrojů audia dohromady, správně by se měla využít knihovna SDL\_mixer, ale udělal jsem to takhle pro jednoduchost a přehlednost.
+	\subsection{Vykreslování v jiném vlákně}
+	Přidání varianty pro počítače s vícejádrovými procesory. V 1. vlákně bude stále běžet nekonečná smyčka, ale bude vytvořeno i 2. vlákno, kde bude probíhat veškeré vykreslování.
+	\\
+	Pokoušel jsem se o to v třídě KeyboardParallel, ale zjistil jsem, že SDL podporuje vykreslování jen z vlákna, ve kterém byl renderer vytvořen, proto by bylo nutné mírně překopat aplikaci, tak jsem aplikaci prozatím nechal jednovláknovou.
+	\subsection{Přesun textboxů do jiného okna}
+	Dát textboxy z okna s klávesami do vlastního okna, tedy vytvořit něco jako menu, ale zase jsem to pro jednoduchost udělal takhle, navíc to ničemu nevadí, aspoň zatím.
+	\subsection{Přidání dalších funkcí}
+	Přidat úplně nové funkce. Například že přehrávání souboru .keys bude vypadat, tak jako to vypadá u podobných klávesových programů, tedy že budou padat různě dlouhé obdelníky signalizující, jak dlouho bude klávesa hrát a kdy.
+	\\
+	Případně by podobně šlo naimplementovat i něco na styl hry guitar hero, tedy že by takto padaly obdelníky a uživatel by měl za úkol je co nejpřesněji hrát.
+		\subsubsection{Vlastní font}
+	Možnost nastavit si vlastní font. Pro implementaci by jen stačilo najít, kde má operační systém uloženy .ttf soubory a přidat textbox, kam by se jméno fontu zadalo. (ideálně okno, kde by se vybralo z dostupných fontů)
+	\subsubsection{Trénování tónů}
+	Náhodně se generují tóny a uživatel má za úkol uhodnout o jaké tóny se jedná, resp. jaké klávesy je generují.
+	\subsection{Přidat tlačítka pro potvrzení změn}
+	Přidat do nově vytvořených oken (třeba toho pro nastavování klávesy) tlačítko na potvrzení změn, místo toho aby se to dělalo přes zavření okna.
+	\subsection{Přidat modifikaci audia (zvukové efekty)}
+	Například: Držením klávesy alt by se hrané audio změnilo nějakým efektem. Třeba že by hrané audio bylo hlubší, "rozmazanější", atd. Případně toho docílit pohyby myší.
+	\subsection{Přidat možnost výběru formátu audia}
+	V budoucnu by bylo dobré, aby si uživatel mohl vybrat, jaký audio formát bude program používat (tedy v jakém formátu bude přehrávat audio soubory jak z kláves, tak z textboxu). Ale pozor ne všechny formáty se chovají úplně dobře, například na mém počítači formát s 16bitovými unsigned samply způsobuje tolik praskání, že je hraní neposlouchatelné.
+	\\
+	Nyní je defaultní audio formát : 
+	\\
+	2 kanály, 16 bitové signed samply, 22050 Hz frekvence.
+	\\
+	Callback funkce se volá s bufferem velikosti CALLBACK\_SIZE frames, kde CALLBACK\_SIZE = 256.
+	
+	\newpage
+	\subsection{Zdokonalení jmen kláves}
+	Dělat jména kláves tak, aby to dávalo největší smysl. Z hlediska implementace to je pouze udělat velký switch a na základě jména vybrat 3 písmena, která vyobrazíme. Například místo space, kde se teď píše Spe psát třeba Spc nebo Spa.
+	\subsection{Důvod proč tato rozšíření chybí}
+	Celkově to nejsou až tak časově náročná rozšíření, ale bohužel na ně teď nemám příliš času.
+\end{document}
