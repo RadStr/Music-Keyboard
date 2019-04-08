@@ -19,7 +19,7 @@
 	
 	\newpage
 	\subsection{Popis souborů a adresářů}
-	Stáhneme projekt z repository. Ihned vidíme složky lib, test a include a zdrojové soubory programu a soubory arial.ttf a VS\_CMD\_COMPILATION.txt a soubory k dokumentaci. Složka GenerateSource obsahuje soubor cppGenCodeForKeys.cpp s kódem, který jsem použil ke generování defaultního ovládání. Viz. metoda defaultInitControlKeys v souboru Keyboard.cpp.
+	Stáhneme projekt z repository. Ihned vidíme složky lib, test a include a zdrojové soubory programu a soubory arial.ttf a VS\_CMD\_COMPILATION.txt a soubory k dokumentaci a .dll soubory. Složka GenerateSource obsahuje soubor cppGenCodeForKeys.cpp s kódem, který jsem použil ke generování defaultního ovládání. Viz. metoda defaultInitControlKeys v souboru Keyboard.cpp. (Tento zdroják se nekompiluje s ostatními, je tam jen pro kompletnost).
 	\\
 	\\
 	Složka lib obsahuje všechny .lib soubory nutné pro kompilaci.
@@ -245,7 +245,7 @@
 	
 	\newpage
 	\subsection{Popis formátu souboru .keys}
-	1 řádka představuje 1 event a obsahuje všechny potřebné informace k přehrání. Tedy timestamp v ms (kdy event nastal), a na jaké klávese byl event vykonán (ID klávesy, indexované od 1, tedy 1 je 1. klávesa zleva) a jaký to byl event (stisknutí = 0 nebo puštění = 1).
+	1 řádka představuje 1 event a obsahuje všechny potřebné informace k přehrání. Tedy timestamp v ms (kdy event nastal), na jaké klávese byl event vykonán (ID klávesy, indexované od 1, tedy 1 je 1. klávesa zleva) a jaký to byl event (stisknutí = 0 nebo puštění = 1).
 	\\
 	\\
 	Jednotlivé části na řádce jsou odděleny mezerami.
@@ -291,7 +291,7 @@
 	\maketitle\section{Možná budoucí rozšíření}	
 	Tato sekce obsahuje rozšíření, která možná někdy v budoucnu doimplementuji.
 	\\
-	Rozšíření je spousta, toto jsou hlavní, co mě napadly.
+	Rozšíření je spousta. Toto jsou hlavní, co mě napadly.
 	\subsection{Jiné mixování audia}
 	Použít knihovnu SDL\_mixer pro mixování. Protože je i v dokumentaci SDL psáno, že metoda SDL\_MixAudioFormat by se neměla používat na mixování více zdrojů audia dohromady, správně by se měla využít knihovna SDL\_mixer, ale udělal jsem to takhle pro jednoduchost a přehlednost.
 	\subsection{Vykreslování v jiném vlákně}
@@ -323,7 +323,7 @@
 	
 	\newpage
 	\subsection{Zdokonalení jmen kláves}
-	Dělat jména kláves tak, aby to dávalo největší smysl. Z hlediska implementace to pouze znamená udělat velký switch a na základě jména vybrat 3 písmena, která vyobrazíme. Například místo space, kde se teď píše Spe psát třeba Spc nebo Spa.
+	Dělat jména kláves tak, aby to dávalo největší smysl. Z hlediska implementace to pouze znamená udělat velký switch a na základě jména vybrat 3 písmena, která vyobrazíme. Například místo space, kde se teď vypíše Spe psát třeba Spc nebo Spa.
 	\subsection{Důvod proč tato rozšíření chybí}
 	Celkově to nejsou až tak časově náročná rozšíření, ale bohužel na ně teď nemám příliš času.
 \end{document}
