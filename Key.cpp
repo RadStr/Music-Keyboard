@@ -23,12 +23,13 @@ Key::Key(int x, int y, int w, int h) {
 }
 
 
-void Key::initKey() {
-	this->audioConvert.buf = NULL;
+constexpr void Key::initKey() {
+	this->audioConvert.buf = nullptr;
 	this->startOfCurrAudio = 0;
 }
 
-void Button::resizeButton(int x, int y, int w, int h) {
+
+constexpr void Button::resizeButton(int x, int y, int w, int h) {
 	this->rectangle.x = x;
 	this->rectangle.y = y;
 	this->rectangle.w = w;
@@ -43,45 +44,39 @@ bool Button::checkMouseClick(const SDL_MouseButtonEvent &event) {
 
 bool Key::setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec) {
 	this->isDefaultSound = false;
-	Uint8 *audioBuffer = NULL;
+	Uint8 *audioBuffer = nullptr;
 	Uint32 audioBufferLen = 0;
 
 	SDL_AudioSpec *spec = new SDL_AudioSpec();
 	SDL_AudioSpec *specForFree = spec;
 
 	spec = SDL_LoadWAV(filename, spec, &audioBuffer, &audioBufferLen);
-	if (spec != NULL) {
-		if (this->audioConvert.buf != NULL) {
-			std::free(this->audioConvert.buf);
-			this->audioConvert.buf = NULL;
-		}
+	if (spec != nullptr) {
+		delete[] this->audioConvert.buf;
+		this->audioConvert.buf = nullptr;
+
 		Keyboard::convert(&this->audioConvert, spec, desiredAudioSpec, audioBuffer, audioBufferLen);
-
 		SDL_FreeWAV(audioBuffer);
-		audioBuffer = NULL;
-
-		if (spec != NULL) {				
-			if (spec != specForFree) {		// This case shouldn't happen, but just in case
-				std::free(spec);
-				std::free(specForFree);
-			}
-			else {
-				std::free(spec);
-			}
+		audioBuffer = nullptr;
+			
+		if (spec != specForFree) {		// This case shouldn't happen, but just in case
+			delete spec;
+			delete specForFree;
+		}
+		else {
+			delete spec;
 		}	
 
 		return true;
 	}
 	else {
-		std::free(specForFree);
+		delete specForFree;
 		return false;
 	}
 }
 
 
 void Key::freeKey() {
-	if (this->audioConvert.buf != NULL) {
-		std::free(this->audioConvert.buf);
-		this->audioConvert.buf = NULL;
-	}
+	delete[] this->audioConvert.buf;
+	this->audioConvert.buf = nullptr;
 }

@@ -49,10 +49,10 @@ public:
 	void setWindowButtons(int fileTextboxWidth, int fileTextboxHeight, int keyLabelWidth, int keyLabelHeight);
 
 	// Sets the coordinates of the keyLabel
-	void setKeyLabel(int w, int h);
+	constexpr void setKeyLabel(int w, int h);
 
 	// Sets the coordinates of the file textbox 
-	void setFileTextbox(int w, int h);
+	constexpr void setFileTextbox(int w, int h);
 
 	// Draws the window
 	void drawWindow();

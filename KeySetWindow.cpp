@@ -42,11 +42,11 @@ bool KeySetWindow::mainCycle() {
 		}
 		if (needFileTextboxRedraw) {
 			setFileTextbox(this->fileTextbox.textRectangle.w, this->fileTextbox.textRectangle.h);
-			this->fileTextbox.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BACKGROUND_BLUE);
+			this->fileTextbox.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE);
 		}
 		if (needKeyLabelRedraw) {
 			setKeyLabel(this->keyLabel.textRectangle.w, this->keyLabel.textRectangle.h);
-			this->keyLabel.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BLACK);
+			this->keyLabel.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BLACK);
 		}
 
 		if (isWindowEvent) {
@@ -184,6 +184,7 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 		break;
 	}
 
+
 	if (enterPressed) {
 		this->key->setAudioBufferWithFile(&this->fileTextbox.text[0], this->keyboard->audioSpec);
 		this->keyLabel.hasFocus = false;
@@ -223,7 +224,7 @@ void KeySetWindow::setWindowButtons(int fileTextboxWidth, int fileTextboxHeight,
 }
 
 
-void KeySetWindow::setKeyLabel(int w, int h) {
+constexpr void KeySetWindow::setKeyLabel(int w, int h) {
 	keyLabel.textRectangle.x = (this->windowWidth - w) / 2;
 	keyLabel.textRectangle.y = -this->windowHeight / 4 + (this->windowHeight - h) / 2;
 	keyLabel.textRectangle.w = w;
@@ -234,7 +235,7 @@ void KeySetWindow::setKeyLabel(int w, int h) {
 }
 
 
-void KeySetWindow::setFileTextbox(int w, int h) {
+constexpr void KeySetWindow::setFileTextbox(int w, int h) {
 	this->fileTextbox.textRectangle.x = (this->windowWidth - w) / 2;
 	this->fileTextbox.textRectangle.y = this->windowHeight / 4 + (this->windowHeight - h) / 2;
 	this->fileTextbox.textRectangle.w = w;
@@ -257,14 +258,14 @@ void KeySetWindow::drawWindow() {
 
 
 void KeySetWindow::drawTextboxes() {
-	this->fileTextbox.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BACKGROUND_BLUE);
-	this->keyLabel.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BLACK);
+	this->fileTextbox.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE);
+	this->keyLabel.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BLACK);
 }
 
 
 void KeySetWindow::freeResources() {
-	// Close and destroy the window
-	SDL_DestroyWindow(window);
 	// Destroy renderer
 	SDL_DestroyRenderer(renderer);
+	// Close and destroy the window
+	SDL_DestroyWindow(window);
 }

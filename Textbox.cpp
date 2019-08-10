@@ -1,6 +1,9 @@
 #include "Textbox.h"
 
 
+const size_t Label::DEFAULT_FONT_SIZE = 26;
+
+
 Label::Label() {
 	this->text = "";
 	this->fontSize = DEFAULT_FONT_SIZE;
@@ -13,13 +16,13 @@ Label::Label(const std::string &text) {
 	this->font = TTF_OpenFont("arial.ttf", fontSize);
 }
 
-
 Textbox::Textbox() : Label() { }
 Textbox::Textbox(const std::string &text) : Label(text) { }
 
+
 void Label::freeLabel() {
 	TTF_CloseFont(font);
-	font = NULL;
+	font = nullptr;
 }
 
 void Textbox::freeTextbox() {
@@ -34,7 +37,7 @@ void Label::setSizesBasedOnButtonSize(int textX, int textY, int buttonX, int but
 	this->setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
 }
 
-void Label::setSizes(int textX, int textY, int textW, int textH, int buttonX, int buttonY, int buttonW, int buttonH) {
+constexpr void Label::setSizes(int textX, int textY, int textW, int textH, int buttonX, int buttonY, int buttonW, int buttonH) {
 	this->textRectangle.x = textX;
 	this->textRectangle.y = textY;
 	this->textRectangle.w = textW;
@@ -48,10 +51,10 @@ void Label::setSizes(int textX, int textY, int textW, int textH, int buttonX, in
 
 void Label::findFittingFont(int *textWidth, int *textHeight, int widthLimit, int heightLimit) {
 	// First free the old font
-	if (this->font != NULL) {
+	if (this->font != nullptr) {
 		TTF_CloseFont(this->font);
 	}
-	int fontSize;
+	size_t fontSize;
 	for (fontSize = DEFAULT_FONT_SIZE; fontSize > 1; fontSize--) {
 		this->font = TTF_OpenFont("arial.ttf", fontSize);
 		if (testTextSize(this->text, this->font, textWidth, textHeight, widthLimit, heightLimit) >= 0) {
@@ -88,21 +91,22 @@ void Label::drawTextWithBackground(SDL_Renderer *renderer, SDL_Color color, SDL_
 	else {
 		SDL_SetRenderDrawColor(renderer, bgHasNotFocusColor.r, bgHasNotFocusColor.g, bgHasNotFocusColor.b, bgHasNotFocusColor.a);
 	}
-	SDL_RenderFillRect(renderer, &this->button.rectangle);
 
+	SDL_RenderFillRect(renderer, &this->button.rectangle);
 	this->drawText(renderer, color);
 }
 
 
 void Label::drawText(SDL_Renderer *renderer, SDL_Color color) {
-	SDL_Surface* surfaceMessage = TTF_RenderText_Solid(font, &this->text[0], color);
-	SDL_Texture* message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+	if (this->text.size() != 0) {
+		SDL_Surface* surfaceMessage = TTF_RenderText_Solid(font, &this->text[0], color);
+		SDL_Texture* message = SDL_CreateTextureFromSurface(renderer, surfaceMessage);
+		SDL_RenderCopy(renderer, message, nullptr, &this->textRectangle);
 
-	SDL_RenderCopy(renderer, message, NULL, &this->textRectangle);
-
-	// Free resources
-	SDL_FreeSurface(surfaceMessage);
-	SDL_DestroyTexture(message);
+		// Free resources
+		SDL_FreeSurface(surfaceMessage);
+		SDL_DestroyTexture(message);
+	}
 }
 
 
