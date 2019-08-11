@@ -4,7 +4,6 @@
 #include "SDL.h"
 #include "SDL_ttf.h"
 
-#define DEFAULT_FONT_SIZE 26
 
 // TODO: In future maybe have option to set font, for this to be possible we will need to look for the ttf files in the OS specific directories
 class Label {
@@ -12,12 +11,16 @@ public:
 	Label();
 	Label(const std::string &text);
 
+	static const size_t DEFAULT_FONT_SIZE;
+
 	TTF_Font *font;
-	int fontSize;
+	size_t fontSize;
 	std::string text;
 	Button button;
 	SDL_Rect textRectangle;	
 	bool hasFocus = false;
+	SDL_Texture *texture = nullptr;
+
 
 	// Draws the text on the renderer with the color, respectively it just prepares for the drawing
 	// It will be drawn when SDL_RenderPresent is called.
@@ -40,7 +43,7 @@ public:
 	void setSizesBasedOnButtonSize(int textX, int textY, int buttonX, int buttonY, int buttonW, int buttonH);
 
 	// Sets the sizes of text and button
-	void setSizes(int textX, int textY, int textW, int textH, int buttonX, int buttonY, int buttonW, int buttonH);
+	constexpr void setSizes(int textX, int textY, int textW, int textH, int buttonX, int buttonY, int buttonW, int buttonH);
 
 	// Free label resources
 	void freeLabel();
@@ -50,6 +53,7 @@ class Textbox : public Label {
 public:
 	Textbox();
 	Textbox(const std::string &text);
+
 
 	// Returns true if the text should be rendered
 	// Changes the enterPressed variable to true if enter was pressed
