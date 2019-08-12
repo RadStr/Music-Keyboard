@@ -157,8 +157,8 @@ void Keyboard::generateTone(const SDL_AudioSpec *spec, int keyID, size_t numberO
 	Uint32 bufferLen = keyCVT->len_mult * sourceAudioByteSize;
 	Uint8 *buffer = new Uint8[bufferLen];
 
-	double freq = 440 * pow(2, (keyID - 49) / (double)12);			// Frequency of the tone in Hertz (Hz)
-	double period = (double)sourceSpec.freq / freq;					// sample rate / frequency of the tone
+	double freq = 440 * pow(2, (keyID - 49) / static_cast<double>(12));			// Frequency of the tone in Hertz (Hz)
+	double period = static_cast<double>(sourceSpec.freq) / freq;					// sample rate / frequency of the tone
 	size_t j = 0;
 	for (size_t i = 0; i < sourceAudioByteSize; i++) {
 		double angle = 2.0 * M_PI * j / period;
@@ -650,7 +650,7 @@ bool Keyboard::setControlForKeyFromConfigFile(Key *key, const std::string &token
 			return false;
 		}
 
-		SDL_Scancode sc = (SDL_Scancode)(SDL_SCANCODE_F1 + fNum - 1);
+		SDL_Scancode sc = static_cast<SDL_Scancode>(SDL_SCANCODE_F1 + fNum - 1);
 		key->keysym.sym = SDL_SCANCODE_TO_KEYCODE(sc);
 		key->keysym.scancode = sc;
 	}
@@ -775,22 +775,22 @@ bool Keyboard::setControlForKeyFromConfigFile(Key *key, const std::string &token
 		key->keysym.scancode = SDL_SCANCODE_KP_PERIOD;
 	}
 	else if (c >= 'a' && c <= 'z') {
-		key->keysym.sym = (SDL_Keycode)c;
-		key->keysym.scancode = (SDL_Scancode)((int)SDL_SCANCODE_A + (int)(c - 97));
+		key->keysym.sym = static_cast<SDL_Keycode>(c);
+		key->keysym.scancode = static_cast<SDL_Scancode>(static_cast<int>(SDL_SCANCODE_A) + static_cast<int>(c - 97));
 	}
 	else if (c >= 'A' && c <= 'Z') {
-		key->keysym.sym = (SDL_Keycode)(c + 32);
-		key->keysym.scancode = (SDL_Scancode)((int)SDL_SCANCODE_A + (int)(c - 65));
+		key->keysym.sym = static_cast<SDL_Keycode>(c + 32);
+		key->keysym.scancode = static_cast<SDL_Scancode>(static_cast<int>(SDL_SCANCODE_A) + static_cast<int>(c - 65));
 	}
 	else if (c >= '1' && c <= '9') {
 		if (token.substr(1, 2) == "KP") {
-			SDL_Scancode sc = (SDL_Scancode)((int)SDL_SCANCODE_KP_1 + (int)(c - 49));
+			SDL_Scancode sc = static_cast<SDL_Scancode>(static_cast<int>(SDL_SCANCODE_KP_1) + static_cast<int>(c - 49));
 			key->keysym.sym = SDL_SCANCODE_TO_KEYCODE(sc);
 			key->keysym.scancode = sc;
 		}
 		else {
-			key->keysym.sym = (SDL_Keycode)c;
-			key->keysym.scancode = (SDL_Scancode)(SDL_SCANCODE_1 + (int)(c - 49));
+			key->keysym.sym = static_cast<SDL_Scancode>(c);
+			key->keysym.scancode = static_cast<SDL_Scancode>(SDL_SCANCODE_1 + static_cast<int>(c - 49));
 		}
 	}
 	else if (c == '0') {
@@ -1099,7 +1099,7 @@ Key * Keyboard::checkMouseClickAndPerformAction(const SDL_MouseButtonEvent &even
 	Key *key = this->findKeyOnPos(event.x, event.y);
 	keyPressedByMouse = key;
 #if DEBUG
-	std::cout << keyPressedByMouse->ID << "\tFreq: " << 440 * pow(2, (keyPressedByMouse->ID - 49) / (double)12) << std::endl;
+	std::cout << keyPressedByMouse->ID << "\tFreq: " << 440 * pow(2, (keyPressedByMouse->ID - 49) / static_cast<double>(12)) << std::endl;
 #endif
 	if (event.button == SDL_BUTTON_LEFT) {
 		keyPressAction(key, event.timestamp);
@@ -1786,7 +1786,7 @@ void Keyboard::playKeyFile(const std::string &path) {
 						ifs.close();
 						return;
 					}
-					keyET = (KeyEventType)uintET;
+					keyET = static_cast<KeyEventType>(uintET);
 				}
 
 				currToken++;
