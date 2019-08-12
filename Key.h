@@ -30,7 +30,7 @@ public:
 	bool checkMouseClick(const SDL_MouseButtonEvent &event);
 
 	// Resizes the rectangle representing the button
-	void resizeButton(int x, int y, int w, int h);
+	constexpr void resizeButton(int x, int y, int w, int h);
 };
 
 class Key : public Button {
@@ -46,7 +46,6 @@ public:
 	int startOfCurrAudio;
 	// Contains the buffer with the audio to be played converted to the format of the keyboards (respectively audioDevice which the keyboards use for playing)
 	SDL_AudioCVT audioConvert;	 
-
 	
 	// Key ID (indexing from 0 ... left key on keyboard has index 0)
 	int ID;
@@ -61,8 +60,9 @@ public:
 	// The key which presses the key
 	SDL_Keysym keysym;
 
+
 	// Initialize the key variables
-	void initKey();
+	constexpr void initKey();
 
 	// Initialize the audioConvert.buf with the audio from audio file given in filename. The buffer is in the desiredAudioSpec
 	// Returns true if the buffer was initialized, false if not
