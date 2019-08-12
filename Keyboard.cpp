@@ -899,27 +899,67 @@ int Keyboard::mainCycle() {
 
 	GlobalVariables::LOGGER << "\"Endless\" loop starting..." << std::endl;
 	while (!this->quit) {
+#if DEBUG
+		GlobalVariables::LOGGER << "Calling SDL_PollEvent...";
+#endif
 		if (SDL_PollEvent(&event)) {
+#if DEBUG
+			GlobalVariables::LOGGER << "SDL_PollEvent ended." << std::endl;
+#endif
+
 			shouldRedrawKeys = false;
 			shouldRedrawTextboxes = false;
 			shouldRedrawKeyLabels = false;
 			render = false;
+
+#if DEBUG
+			GlobalVariables::LOGGER << "Calling checkEvents()..." << std::endl;
+#endif
 			checkEvents(event);
+#if DEBUG
+			GlobalVariables::LOGGER << "checkEvents() ended." << std::endl;
+			GlobalVariables::LOGGER << "Checking what needs to be redrawed..." << std::endl;
+#endif
+
 
 			if (shouldRedrawKeys) {
+#if DEBUG
+				GlobalVariables::LOGGER << "Calling drawKeys()...";
+#endif
 				drawKeys();
+#if DEBUG
+				GlobalVariables::LOGGER << "drawKeys() ended." << std::endl;
+#endif
 				render = true;
 			}
 			if (shouldRedrawTextboxes) {
+#if DEBUG
+				GlobalVariables::LOGGER << "Calling drawTextboxes()...";
+#endif
 				drawTextboxes();
+#if DEBUG
+				GlobalVariables::LOGGER << "drawTextboxes() ended." << std::endl;
+#endif
 				render = true;
 			}
 			if (shouldRedrawKeyLabels) {
+#if DEBUG
+				GlobalVariables::LOGGER << "Calling drawKeyLabels()...";
+#endif
 				drawKeyLabels();
+#if DEBUG
+				GlobalVariables::LOGGER << "drawKeyLabels() ended." << std::endl;
+#endif
 				render = true;
 			}
 			if (render) {
+#if DEBUG
+				GlobalVariables::LOGGER << "Calling SDL_RenderPresent()...";
+#endif
 				SDL_RenderPresent(this->renderer);
+#if DEBUG
+				GlobalVariables::LOGGER << "SDL_RenderPresent ended.";
+#endif
 			}
 		}
 	}
