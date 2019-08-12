@@ -471,7 +471,8 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 
 	int currLine = 0;
 	int keyIndex = 0;		// keyIndex, because of differences in indexing between key array and indexing in config file
-	for (currLine = 0; keyIndex < expectedLineCountInConfig; currLine++, keyIndex++) {			// TODO: This is pretty awful indexing, but it is my bad, choosed bad format of config file (respectively that record key will be 0th index)
+	// This is pretty awful indexing, but it is my bad, choosed bad format of config file (respectively that record key will be 0th index)
+	for (currLine = 0; keyIndex < expectedLineCountInConfig; currLine++, keyIndex++) {			
 		if (hasRecordKey) {
 			keyIndex = currLine - 1;			// -1 because the record file is at index 0
 		}
@@ -523,7 +524,8 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 							hasRecordKey = true;
 						}
 						else {
-							for (; keyIndex < keyNumber - 1; currLine++, keyIndex++) {			// -1 because there is difference in the indexing (In the file indexing from 1, in programming from 0)
+							// -1 because there is difference in the indexing (In the file indexing from 1, in programming from 0)
+							for (; keyIndex < keyNumber - 1; currLine++, keyIndex++) {			
 								initKeyWithDefaultAudio(&this->keys[keyIndex]);
 							}
 						}
