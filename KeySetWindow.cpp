@@ -9,8 +9,7 @@ KeySetWindow::KeySetWindow(Key *key, SDL_Color color, Keyboard *keyboard) {
 	Uint32 flags = SDL_GetWindowFlags(this->window);
 	this->keyLabel.hasFocus = false;
 	this->fileTextbox.hasFocus = false;
-	this->needFileTextboxRedraw = false;
-	this->needKeyLabelRedraw = false;
+	this->needRedraw = false;
 	this->color = color;
 	SDL_GetWindowSize(this->window, &windowWidth, &windowHeight);
 
@@ -30,23 +29,22 @@ bool KeySetWindow::mainCycle() {
 	bool quit = false;
 	drawWindow();
 	bool returnVal = false;
+	bool render;
 
 
 	while (!quit) {
 		isWindowEvent = false;
-		needFileTextboxRedraw = false;
-		needKeyLabelRedraw = false;
+		needRedraw = false;
+		render = false;
 
 		if (SDL_PollEvent(&event)) {
 			quit = checkEvents(event, &returnVal);
 		}
-		if (needFileTextboxRedraw) {
+		if (needRedraw) {
 			setFileTextbox(this->fileTextbox.textRectangle.w, this->fileTextbox.textRectangle.h);
-			this->fileTextbox.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BACKGROUND_BLUE);
-		}
-		if (needKeyLabelRedraw) {
 			setKeyLabel(this->keyLabel.textRectangle.w, this->keyLabel.textRectangle.h);
-			this->keyLabel.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BLACK);
+			this->drawTextboxes();
+			render = true;
 		}
 
 		if (isWindowEvent) {
@@ -57,9 +55,11 @@ bool KeySetWindow::mainCycle() {
 			this->keyboard->drawWindow();
 			this->keyboard->drawKeyLabels();
 			SDL_RenderPresent(this->keyboard->renderer);
+			render = true;
 		}
-
-		SDL_RenderPresent(this->renderer);
+		if (render) {
+			SDL_RenderPresent(this->renderer);
+		}
 	}
 
 	freeResources();
@@ -76,7 +76,7 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 	case SDL_TEXTINPUT:
 		if ((flags & SDL_WINDOW_INPUT_FOCUS) != 0) {
 			if (fileTextbox.hasFocus) {
-				needFileTextboxRedraw = this->fileTextbox.processKeyEvent(event, &enterPressed, &shouldResizeTextboxes);
+				needRedraw = this->fileTextbox.processKeyEvent(event, &enterPressed, &shouldResizeTextboxes);
 			}
 		}
 		break;
@@ -91,11 +91,11 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 				keyLabel.hasFocus = false;
 				fileTextbox.hasFocus = false;
 
-				needKeyLabelRedraw = true;
+				needRedraw = true;
 				isWindowEvent = true;
 			}
 			else if (fileTextbox.hasFocus) {
-				needFileTextboxRedraw = this->fileTextbox.processKeyEvent(event, &enterPressed, &shouldResizeTextboxes);
+				needRedraw = this->fileTextbox.processKeyEvent(event, &enterPressed, &shouldResizeTextboxes);
 			}
 		}
 		break;
@@ -106,19 +106,13 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 	case SDL_MOUSEBUTTONUP:
 		if ((flags & SDL_WINDOW_MOUSE_FOCUS) != 0) {
 			if (event.button.button == SDL_BUTTON_LEFT) {
-				if (event.button.x >= keyLabel.button.rectangle.x &&
-					event.button.x <= keyLabel.button.rectangle.x + keyLabel.button.rectangle.w &&
-					event.button.y >= keyLabel.button.rectangle.y &&
-					event.button.y <= keyLabel.button.rectangle.y + keyLabel.button.rectangle.h)
+				if (keyLabel.button.checkMouseClick(event.button))
 				{
 					keyLabel.hasFocus = !keyLabel.hasFocus;
 					fileTextbox.hasFocus = false;
 					SDL_StopTextInput();
 				}
-				else if (event.button.x >= fileTextbox.button.rectangle.x &&
-					event.button.x <= fileTextbox.button.rectangle.x + fileTextbox.button.rectangle.w &&
-					event.button.y >= fileTextbox.button.rectangle.y &&
-					event.button.y <= fileTextbox.button.rectangle.y + fileTextbox.button.rectangle.h)
+				else if (fileTextbox.button.checkMouseClick(event.button))
 				{
 					keyLabel.hasFocus = false;
 					fileTextbox.hasFocus = !fileTextbox.hasFocus;
@@ -134,8 +128,7 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 					fileTextbox.hasFocus = false;
 					SDL_StopTextInput();
 				}
-				needFileTextboxRedraw = true;
-				needKeyLabelRedraw = true;
+				needRedraw = true;
 			}
 		}
 		break;
@@ -184,6 +177,7 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 		break;
 	}
 
+
 	if (enterPressed) {
 		this->key->setAudioBufferWithFile(&this->fileTextbox.text[0], this->keyboard->audioSpec);
 		this->keyLabel.hasFocus = false;
@@ -223,7 +217,7 @@ void KeySetWindow::setWindowButtons(int fileTextboxWidth, int fileTextboxHeight,
 }
 
 
-void KeySetWindow::setKeyLabel(int w, int h) {
+constexpr void KeySetWindow::setKeyLabel(int w, int h) {
 	keyLabel.textRectangle.x = (this->windowWidth - w) / 2;
 	keyLabel.textRectangle.y = -this->windowHeight / 4 + (this->windowHeight - h) / 2;
 	keyLabel.textRectangle.w = w;
@@ -234,7 +228,7 @@ void KeySetWindow::setKeyLabel(int w, int h) {
 }
 
 
-void KeySetWindow::setFileTextbox(int w, int h) {
+constexpr void KeySetWindow::setFileTextbox(int w, int h) {
 	this->fileTextbox.textRectangle.x = (this->windowWidth - w) / 2;
 	this->fileTextbox.textRectangle.y = this->windowHeight / 4 + (this->windowHeight - h) / 2;
 	this->fileTextbox.textRectangle.w = w;
@@ -249,22 +243,21 @@ void KeySetWindow::setFileTextbox(int w, int h) {
 void KeySetWindow::drawWindow() {
 	SDL_RenderClear(renderer);
 	drawTextboxes();
-	needFileTextboxRedraw = false;
-	needKeyLabelRedraw = false;
+	needRedraw = false;
 
 	SDL_RenderPresent(renderer);
 }
 
 
 void KeySetWindow::drawTextboxes() {
-	this->fileTextbox.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BACKGROUND_BLUE);
-	this->keyLabel.drawTextWithBackground(this->renderer, this->color, Keyboard::RED, Keyboard::BLACK);
+	this->keyLabel.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BLACK);
+	this->fileTextbox.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE);
 }
 
 
 void KeySetWindow::freeResources() {
-	// Close and destroy the window
-	SDL_DestroyWindow(window);
 	// Destroy renderer
 	SDL_DestroyRenderer(renderer);
+	// Close and destroy the window
+	SDL_DestroyWindow(window);
 }

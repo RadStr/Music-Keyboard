@@ -4,7 +4,7 @@
 #include "Key.h"
 #include "SDL.h"
 #include "Textbox.h"
-#include <fstream>
+//#include <fstream>
 #include <vector>
 
 #include <math.h>
@@ -14,15 +14,8 @@
 
 #include "SDL_ttf.h"
 
+#include<functional>		// TODO: Added because of gcc
 
-#define DEBUG 0
-
-
-#define MAX_KEYS 88 			// Key count on piano ... If the user wants to have more keys, 
-								// he has to change the source code, change this MAX_KEYS macro 
-								// and also change the defaultInitControlKeys, because only the first 88 keys are initialized
-
-#define CALLBACK_SIZE 256		// Size of the callback buffer, which is filled with audio to be played
 
 // The declaration of function for callback (calls method on the Keyboard)
 void audio_callback(void *userData, Uint8 *bufferToBePlayed, int bytes);
@@ -32,16 +25,20 @@ public:
 	// Initializes the keyboard and associates it with given renderer and window
 	Keyboard(SDL_Window *window, SDL_Renderer *renderer);
 
-	static const SDL_Color WHITE;
-	static const SDL_Color RED;
-	static const SDL_Color BLACK;
-	static const SDL_Color BACKGROUND_BLUE;
+
+	static const size_t MAX_KEYS; 			// Key count on piano ... If the user wants to have more keys, 
+	// he has to change the source code, change this MAX_KEYS macro 
+	// and also change the defaultInitControlKeys, because only the first 88 keys are initialized
+
+	static const size_t CALLBACK_SIZE;		// Size of the callback buffer, which is filled with audio to be played
 
 	int whiteKeyWidth = 28;
 	int whiteKeyHeight = 400;
 	int blackKeyWidth = 3 * whiteKeyWidth / 4;
 	int blackKeyHeight = whiteKeyHeight / 2;
 	int upperLeftCornerForKeysY = whiteKeyHeight;
+
+	Label audioPlayingLabel;
 
 	// Pointers, needs to be freed
 	SDL_AudioSpec *audioSpec;
@@ -51,8 +48,7 @@ public:
 	Textbox *textboxWithFocus;
 	Textbox *configFileTextbox;
 	Textbox *directoryWithFilesTextbox;
-	Label *audioPlayingLabel;
-	Uint8 *bufferOfCallbackSize = NULL;
+	Uint8 *bufferOfCallbackSize = nullptr;
 	Key *keys;
 
 	SDL_Renderer *renderer;
@@ -61,10 +57,11 @@ public:
 
 	Key *keyPressedByMouse;		// Points to the key, so don't free it (Would free 1 key twice)
 	SDL_Window *window;			// Don't free the window, the caller should do that
+	// End of pointers
+
 	int windowWidth;
 	int windowHeight;
-
-	int keyCount = MAX_KEYS;
+	size_t keyCount = MAX_KEYS;
 	Key recordKey;
 	Uint32 recordStartTime;
 	std::vector<Uint8> record;
@@ -91,14 +88,14 @@ public:
 	bool shouldRedrawKeys;
 	bool shouldRedrawKeyLabels;
 
-
+	std::vector<SDL_Texture *> textures;
 
 protected:
 	// This method takes the cvt->buf with length currentCVTBufferLen.
 	// Converts it by using SDL_ConvertAudio and if there was convert overhead in memory.
 	// Then copies the valid bytes from the buffer to new buffer and that new buffer assigns to the cvt->buf.
 	// If there wasn't any overhead doesn't do anything.
-	// If cvt buffer is NULL or currentCVTBufferLen is 0 the function doesn't do anything.
+	// If cvt buffer is nullptr or currentCVTBufferLen is 0 the function doesn't do anything.
 	// Also frees the old content of the cvt->buf.
 	static void convertAudioAndSaveMemory(SDL_AudioCVT *cvt, Uint32 currentCVTBufferLen);
 
@@ -112,30 +109,30 @@ protected:
 	void addToRecordedKeys(Key *key, Uint32 timestamp, KeyEventType keyET);
 
 	// Checks if the event has the same mod (or valid subset for example if alt is mod then the either left or right alt can be pressed)
-	bool checkForMods(const Uint16 keyMod, const Uint16 keyEventMod);
+	 bool checkForMods(const Uint16 keyMod, const Uint16 keyEventMod);
 
 	// Sets key location based on color of key (black or white)
-	void setKeyLocation(int *currX, int index);
+	constexpr void setKeyLocation(int *currX, int index);
 
 	// Sets variables such as whiteKeyHeight etc. based on the size of window
-	void setKeySizes();
+	constexpr void setKeySizes();
 
 	// Returns number < 0 if the keyLabelPart doesn't fit, else returns currY where should be placed next keyLabel for that key
 	static int testTextSize(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font, 
-		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth);
+		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures);
 
 	// Draws the keyLabelPart with current font, doesn't care about width of text.
 	static int drawKeyLabelPartWithoutWidthLimit(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font,
-		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth);
+		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures);
 
 	// Draws the keyLabelPart with current font, cares about width of text.
 	static int drawKeyLabelPartWithWidthLimit(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font, 
-		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth);
+		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures);
 
 	// Perform f function on all the text labels of key
 	int performActionOnKeyLabels(const Key *key, TTF_Font *font, int widthTolerance,
-		std::function<int(const Key *key, int currY, const std::string &keyLabelPart, 
-			const SDL_Color color, TTF_Font *font,  int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth)> f,
+		std::function<int(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font,  
+			int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures)> f,
 		const bool draw, SDL_Renderer *renderer);
 
 	// widthTolerance tells how much space should be between the text and end of white key 
@@ -155,15 +152,17 @@ public:
 	// The loop is exited when either exception occurs or quit event was registered (User clicked on exit cross)
 	int mainCycle();
 
-	// Functions return int to give feedback if the function processsed correctly
+	// Functions return int to give feedback if the function processsed correctly.
 	// Is called in the main loop, processes the given event
 	void checkEvents(const SDL_Event &event);
 
 	// Sets the keysym modifiers of given key based on token split by modDelim
-	void setModifiersForKeyFromConfigFile(Key *key, const std::string &token, char modDelim);
+	// Returns true if the modifiers were valid, false otherwise
+	bool setModifiersForKeyFromConfigFile(Key *key, const std::string &token, char modDelim);
 
 	// Sets the keysym scancode and sym of given key based on token
-	void setControlForKeyFromConfigFile(Key *key, const std::string &token);
+	// Returns true if the control keys were valid, false otherwise
+	bool setControlForKeyFromConfigFile(Key *key, const std::string &token);
 
 	// Goes through to directory and gradually set sounds to keys on keyboard from left to right.
 	// That means iteratively goes through directory and if file with .wav extension is found, then set the first non-set key (going from left)
@@ -185,7 +184,7 @@ public:
 	void resizeTextboxes();
 
 	// Resizes keyboard keys (including record key) based on current width and height of window
-	void resizeKeyboardKeys();
+	constexpr void resizeKeyboardKeys();
 
 	// Is called when play key is pressed, performs needed actions (adding to currentlyPressedKeys, etc. (for example if recording then add to recordedKeys))
 	void keyPressAction(Key *key, Uint32 timestamp);
@@ -197,11 +196,11 @@ public:
 	void addToUnpressedKeys(Key *key);
 
 	// Checks if it was button pressed or unpressed event and if the key is associated with either record key or played key, based on that performs action
-	// Returns pressed key (NULL if none of the keyboard keys was pressed)
+	// Returns pressed key (nullptr if none of the keyboard keys was pressed)
 	Key * findKeyAndPerformAction(const SDL_KeyboardEvent &keyEvent);
 
 	// Checks what was pressed (textbox, key, nothing, etc.) and if it was left or right click, based on that perform action
-	// Returns pressed key (in case of textbox or when nothing was pressed returns NULL)
+	// Returns pressed key (in case of textbox or when nothing was pressed returns nullptr)
 	Key * checkMouseClickAndPerformAction(const SDL_MouseButtonEvent &event);
 
 	// Releases play key pressed (or does nothing if key wasn't pressed)
@@ -220,14 +219,9 @@ public:
 	// Function is called by the SDL library, every time the buffer which will be played needs to refilled. 
 	void playPressedKeysCallback(Uint8 *bufferToBePlayed, int bytes);
 
-	// Deprecated: Not used anymore (Was used before the callback was used)
-	void playSilence(Uint32 len);
-	// Deprecated: It was used in the first implementation
-	void playAudioBuffer(Uint8 *bufferToBePlayed, Uint32 bufferToBePlayedLen);
-
 	// Reduces the crackling by using the currentlyUnpressedKeys vector, which is done by gradually adjusting the sample values, 
 	// instead of just putting silence in the buffer, which may produce crackling because of sudden change in sample values. 
-	// For further understanding take look at the commentary at currentlyUnpressedKeys or at source code.
+	// For further understanding take look at the comments at currentlyUnpressedKeys or at source code.
 	void reduceCrackling(Uint8 *bufferToBePlayed, int bytes);
 
 
@@ -265,7 +259,7 @@ public:
 	// Fills the buffer in keyCVT with tone based on keyID, in format from given spec
 	// So in the end the buffer will contain the tone in spec given as parameter.
 	// And it will contain the numberOfSeconds of audio 
-	void generateTone(const SDL_AudioSpec *spec, int keyID, int numberOfSeconds, SDL_AudioCVT *keyCVT);
+	void generateTone(const SDL_AudioSpec *spec, int keyID, size_t numberOfSeconds, SDL_AudioCVT *keyCVT);
 
 // File methods
 	// Creates the .keys file which will have full path path.keys
@@ -276,27 +270,14 @@ public:
 	void createWavFile(const std::string &path, std::vector<Uint8> record);
 #define createWavFileFromAudioBuffer(path) createWavFile(path, this->record)				// Define more specific function for current instance of keyboard
 
-
-	// Deprecated: not used anymore, was used when there was no callback function.
-	void playWav(std::string path);
-
-
-	// Deprecated: not used anymore, was used when there was no callback function. Maybe not even working correctly
-	// The buffer can be freed after call of this method
-	void playBufferWithSpec(Uint8 *buffer, SDL_AudioSpec *sourceSpec, Uint32 len, SDL_AudioDeviceID audioDevIDLocal);
-
-
 	// Initialization of HW, initializes the audioSpec, opens the audio device and starts the callback calls
 	void initAudioHW();
 
 	// Sets blackKeysCount and whiteKeysCount properties
-	void setBlackAndWhiteKeysCounts() {
-		this->blackKeysCount = countBlackKeys(this->keyCount);
-		this->whiteKeysCount = this->keyCount - this->blackKeysCount;
-	}
+	constexpr void setBlackAndWhiteKeysCounts();
 
 	// Counts number of black keys, if total number of keys on keyboard == keyCountLocal
-	int countBlackKeys(int keyCountLocal);
+	constexpr int countBlackKeys(int keyCountLocal);
 
 	// Initializes all the keys and almost all properties
 	// If initAudioBuffer == true then initialize the buffers of keys with the default tone
@@ -304,6 +285,18 @@ public:
 
 	// totalLinesInFile says how many lines (keys) were really in file - 1 (the first line should contain number of keys on keyboard, so we don't count that)
 	int readConfigfile(int *totalLinesInFile);
+
+
+	// Deprecated: Not used anymore (Was used before the callback was used)
+	void playSilence(size_t len);
+	// Deprecated: It was used in the first implementation
+	void playAudioBuffer(Uint8 *bufferToBePlayed, Uint32 bufferToBePlayedLen);
+	// Deprecated: not used anymore, was used when there was no callback function.
+	void playWav(std::string path);
+	// Deprecated: not used anymore, was used when there was no callback function. Maybe not even working correctly
+	// The buffer can be freed after call of this method
+	void playBufferWithSpec(Uint8 *buffer, SDL_AudioSpec *sourceSpec, Uint32 len, SDL_AudioDeviceID audioDevIDLocal);
+
 protected:
 	// Processes all the lines in config file after the first one and initializes al lthe keys based on the config file
 	int processKeysInConfigFile(std::ifstream &s, std::string &line, int totalLineCountInConfig, bool tooManyKeys, int *totalLinesInFile);
@@ -313,7 +306,13 @@ protected:
 	Key * findKeyOnPos(Sint32 x, Sint32 y);
 
 	// It is just default initialization of controls for all the keys
-	void defaultInitControlKeys(int currKey);
+	constexpr void defaultInitControlKeys(int currKey);
+
+private:
+	// Frees memory associated with the buffer and then the SDL_AudioCVT itself and sets it to 0
+	void freeSDL_AudioCVTptr(SDL_AudioCVT **cvt);
+
+	void freeTextures();
 };
 
 
@@ -324,10 +323,12 @@ public:
 	// Initializes the parallel keyboard and associates it with given renderer and window
 	KeyboardParallel(SDL_Window *window, SDL_Renderer *renderer);
 
+
 	bool shouldResizeTextboxes;
 	bool shouldResizeWindow;
 	bool shouldRedrawWindow;
 	SDL_WindowEvent resizeEvent;
+
 
 	// Same as mainCycle but there is second thread which redraws until end of application (That also means there are no special checks when to redraw, we just redraw it every time we can). 
 	int mainCycleParallel();
