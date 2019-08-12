@@ -410,12 +410,7 @@ int Keyboard::initKeyboard(const std::string &configFilename, int *totalLinesInF
 		return Keyboard::defaultInit(MAX_KEYS, true);
 	}
 
-	try {
-		return this->readConfigfile(totalLinesInFile);
-	}
-	catch (std::exception e) {
-		return -1;
-	}
+	return this->readConfigfile(totalLinesInFile);
 }
 
 
@@ -427,22 +422,23 @@ int Keyboard::readConfigfile(int *totalLinesInFile) {
 
 	if (stream.is_open()) {
 		std::string line;
-		int totalLineCountInConfig = 0;	
+		int totalLineCountInConfig = 0;
 
 		if (std::getline(stream, line)) {
 			try {
 				totalLineCountInConfig = std::stoi(line, nullptr, 10);
-				if (totalLineCountInConfig <= 0) {
-					return this->defaultInit(MAX_KEYS, true);
-				}
-				else if (totalLineCountInConfig > MAX_KEYS) {
-					totalLineCountInConfig = MAX_KEYS;
-					return Keyboard::processKeysInConfigFile(stream, line, totalLineCountInConfig, true, totalLinesInFile);		// Init only the first MAX_KEYS keys
-				}
 			}
-			catch (std::exception e) {	
+			catch (std::exception e) {
 				this->defaultInit(MAX_KEYS, true);
-				return -1;					
+				return -1;
+			}
+
+			if (totalLineCountInConfig <= 0) {
+				return this->defaultInit(MAX_KEYS, true);
+			}
+			else if (totalLineCountInConfig > MAX_KEYS) {
+				totalLineCountInConfig = MAX_KEYS;
+				return Keyboard::processKeysInConfigFile(stream, line, totalLineCountInConfig, true, totalLinesInFile);		// Init only the first MAX_KEYS keys
 			}
 		}
 		else {				// Empty file
