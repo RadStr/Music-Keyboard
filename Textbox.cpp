@@ -1,8 +1,6 @@
 #include "Textbox.h"
 
-
-const size_t Label::DEFAULT_FONT_SIZE = 26;
-
+#include "Main.h"
 
 Label::Label() {
 	this->text = "";
@@ -16,9 +14,6 @@ Label::Label(const std::string &text) {
 	this->font = TTF_OpenFont("arial.ttf", fontSize);
 }
 
-Textbox::Textbox() : Label() { }
-Textbox::Textbox(const std::string &text) : Label(text) { }
-
 
 constexpr void Label::moveTexture() {
 	if (oldTexture != nullptr) {
@@ -28,15 +23,11 @@ constexpr void Label::moveTexture() {
 	newTexture = nullptr;			// Set to nullptr, so after 2 calls both oldTexture and newTexture are == nullptr
 }
 
-void Label::freeLabel() {
+void Label::freeResources() {
 	moveTexture();
 	moveTexture();
 	TTF_CloseFont(font);
 	font = nullptr;
-}
-
-void Textbox::freeTextbox() {
-	freeLabel();
 }
 
 
@@ -64,25 +55,25 @@ void Label::findFittingFont(int *textWidth, int *textHeight, int widthLimit, int
 	if (this->font != nullptr) {
 		TTF_CloseFont(this->font);
 	}
-	size_t fontSize;
-	for (fontSize = DEFAULT_FONT_SIZE; fontSize > 1; fontSize--) {
-		this->font = TTF_OpenFont("arial.ttf", fontSize);
+	size_t fontSizeIter;
+	for (fontSizeIter = DEFAULT_FONT_SIZE; fontSizeIter > 1; fontSizeIter--) {
+		this->font = TTF_OpenFont("arial.ttf", fontSizeIter);
 		if (testTextSize(this->text, this->font, textWidth, textHeight, widthLimit, heightLimit) >= 0) {
-			this->fontSize = fontSize;
+			this->fontSize = fontSizeIter;
 			break;
 		}
 		TTF_CloseFont(this->font);
 	}
-	if (fontSize == 1) {
-		this->fontSize = fontSize;
+	if (fontSizeIter == 1) {
+		this->fontSize = fontSizeIter;
 		this->font = TTF_OpenFont("arial.ttf", 1);
 	}
 }
 
 
 // Returns minus numbers if text is too big, Sets textWidth and textHeight arguments
-int Label::testTextSize(const std::string &text, TTF_Font *font, int *textWidth, int *textHeight, int widthLimit, int heightLimit) {
-	TTF_SizeText(font, &text[0], textWidth, textHeight);
+int Label::testTextSize(const std::string &textToTest, TTF_Font *textFont, int *textWidth, int *textHeight, int widthLimit, int heightLimit) {
+	TTF_SizeText(textFont, &textToTest[0], textWidth, textHeight);
 	if (*textHeight > heightLimit) {
 		return -1;
 	}
@@ -168,4 +159,62 @@ bool Textbox::processKeyEvent(const SDL_Event &e, bool *enterPressed, bool *shou
 	}
 
 	return renderText;
+}
+
+void Textbox::processEnterPressedEvent(Keyboard &keyboard) {
+	keyboard.textboxWithFocus = nullptr;
+	SDL_StopTextInput();
+};
+
+void Textbox::drawTextbox(SDL_Renderer *renderer) { 
+	this->drawTextWithBackground(renderer, GlobalConstants::WHITE, GlobalConstants::RED, GlobalConstants::BACKGROUND_BLUE); 
+}
+
+
+void ConfigFileTextbox::processEnterPressedEvent(Keyboard &keyboard) {
+	int totalLines = 0;
+	keyboard.readConfigfile(&totalLines);
+	this->hasFocus = false;
+	keyboard.drawWindow();
+
+	Textbox::processEnterPressedEvent(keyboard);
+}
+
+void ConfigFileTextbox::drawTextbox(SDL_Renderer *renderer) {
+	this->drawTextWithBackground(renderer, GlobalConstants::WHITE, GlobalConstants::RED, GlobalConstants::BACKGROUND_BLUE);
+}
+
+
+void DirectoryWithFilesTextbox::processEnterPressedEvent(Keyboard &keyboard) {
+	keyboard.setKeySoundsFromDirectory();
+	this->hasFocus = false;
+
+	Textbox::processEnterPressedEvent(keyboard);
+}
+
+void DirectoryWithFilesTextbox::drawTextbox(SDL_Renderer *renderer) {
+	this->drawTextWithBackground(renderer, GlobalConstants::WHITE, GlobalConstants::RED, GlobalConstants::BLACK);
+}
+
+
+void RecordFilePathTextbox::processEnterPressedEvent(Keyboard &keyboard) {
+	this->hasFocus = false;
+
+	Textbox::processEnterPressedEvent(keyboard);
+}
+
+void RecordFilePathTextbox::drawTextbox(SDL_Renderer *renderer) {
+	this->drawTextWithBackground(renderer, GlobalConstants::WHITE, GlobalConstants::RED, GlobalConstants::BACKGROUND_BLUE);
+}
+
+
+void PlayFileTextbox::processEnterPressedEvent(Keyboard &keyboard) {
+	this->hasFocus = false;
+	keyboard.playFile(this->text);
+
+	Textbox::processEnterPressedEvent(keyboard);
+}
+
+void PlayFileTextbox::drawTextbox(SDL_Renderer *renderer) {
+	this->drawTextWithBackground(renderer, GlobalConstants::WHITE, GlobalConstants::RED, GlobalConstants::BLACK);
 }
