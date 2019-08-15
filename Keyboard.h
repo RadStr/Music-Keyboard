@@ -26,11 +26,11 @@ public:
 	Keyboard(SDL_Window *window, SDL_Renderer *renderer);
 
 
-	static const size_t MAX_KEYS; 			// Key count on piano ... If the user wants to have more keys, 
+	static constexpr size_t MAX_KEYS = 88; 			// Key count on piano ... If the user wants to have more keys, 
 	// he has to change the source code, change this MAX_KEYS macro 
 	// and also change the defaultInitControlKeys, because only the first 88 keys are initialized
 
-	static const size_t CALLBACK_SIZE;		// Size of the callback buffer, which is filled with audio to be played
+	static constexpr size_t CALLBACK_SIZE = 256;		// Size of the callback buffer, which is filled with audio to be played
 
 	int whiteKeyWidth = 28;
 	int whiteKeyHeight = 400;
@@ -39,15 +39,15 @@ public:
 	int upperLeftCornerForKeysY = whiteKeyHeight;
 
 	Label audioPlayingLabel;
+	PlayFileTextbox playFileTextbox;
+	RecordFilePathTextbox recordFilePathTextbox;
+	Textbox *textboxWithFocus;
+	ConfigFileTextbox configFileTextbox;
+	DirectoryWithFilesTextbox directoryWithFilesTextbox;
 
 	// Pointers, needs to be freed
 	SDL_AudioSpec *audioSpec;
 	SDL_AudioCVT *audioFromFileCVT;		// Stores the audio buffer from wav to be played
-	Textbox *playFileTextbox;
-	Textbox *recordFilePathTextbox;
-	Textbox *textboxWithFocus;
-	Textbox *configFileTextbox;
-	Textbox *directoryWithFilesTextbox;
 	Uint8 *bufferOfCallbackSize = nullptr;
 	Key *keys;
 
@@ -100,10 +100,7 @@ protected:
 	static void convertAudioAndSaveMemory(SDL_AudioCVT *cvt, Uint32 currentCVTBufferLen);
 
 	// Set foci of textboxes and textboxWithFocus and starts accepting text input by calling SDL_StartTextInput
-	void textboxPressAction(Textbox *clickedTextbox, const SDL_MouseButtonEvent &event);
-
-	// When textbox has focus and enter is pressed, then does action corresponding to that textbox
-	void processEnterPressedEvent();
+	void textboxPressAction(Textbox &clickedTextbox, const SDL_MouseButtonEvent &event);
 
 	// Adds key recodedKeys vector
 	void addToRecordedKeys(Key *key, Uint32 timestamp, KeyEventType keyET);
@@ -130,10 +127,9 @@ protected:
 		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures);
 
 	// Perform f function on all the text labels of key
-	int performActionOnKeyLabels(const Key *key, TTF_Font *font, int widthTolerance,
+	int performActionOnKeyLabels(const Key *key, TTF_Font *font, int widthTolerance, const bool draw,
 		std::function<int(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font,  
-			int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures)> f,
-		const bool draw, SDL_Renderer *renderer);
+			int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures)> f);
 
 	// widthTolerance tells how much space should be between the text and end of white key 
 	// (so there will be spaces between key labels and it will be clear where one label ends and other starts)
@@ -280,7 +276,7 @@ public:
 
 	// Initializes all the keys and almost all properties
 	// If initAudioBuffer == true then initialize the buffers of keys with the default tone
-	int defaultInit(int totalKeys, bool initAudioBuffer);
+	int defaultInit(size_t totalKeys, bool initAudioBuffer);
 
 	// totalLinesInFile says how many lines (keys) were really in file - 1 (the first line should contain number of keys on keyboard, so we don't count that)
 	int readConfigfile(int *totalLinesInFile);
@@ -288,7 +284,8 @@ public:
 
 protected:
 	// Processes all the lines in config file after the first one and initializes al lthe keys based on the config file
-	int processKeysInConfigFile(std::ifstream &s, std::string &line, int totalLineCountInConfig, bool tooManyKeys, int *totalLinesInFile);
+	int processKeysInConfigFile(std::ifstream &s, std::string &line, size_t totalLineCountInConfig, int *totalLinesInFile);
+	void addForCyclesToEvents(std::vector<std::tuple<Uint32, Uint32, Uint32, std::vector<SDL_KeyboardEvent>>> forCycles, std::vector<SDL_KeyboardEvent> &events);
 
 	// Finds which play key was pressed (Is called only when we know that the the place where we clicked hit some key but we don't know which)
 	// Returns the clicked key
@@ -302,4 +299,6 @@ private:
 	void freeSDL_AudioCVTptr(SDL_AudioCVT **cvt);
 
 	void freeTextures();
+
+	static bool SDL_KeyboardEventComparator(const SDL_KeyboardEvent& a, const SDL_KeyboardEvent& b);
 };

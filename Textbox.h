@@ -5,13 +5,15 @@
 #include "SDL_ttf.h"
 
 
-// TODO: In future maybe have option to set font, for this to be possible we will need to look for the ttf files in the OS specific directories
+class Keyboard;		// Forward declaration
+
+
 class Label {
 public:
 	Label();
 	Label(const std::string &text);
 
-	static const size_t DEFAULT_FONT_SIZE;
+	static constexpr size_t DEFAULT_FONT_SIZE = 26;
 
 	TTF_Font *font;
 	size_t fontSize;
@@ -49,19 +51,56 @@ public:
 	constexpr void moveTexture();
 
 	// Free label resources
-	void freeLabel();
+	virtual void freeResources();
 };
 
 class Textbox : public Label {
 public:
-	Textbox();
-	Textbox(const std::string &text);
+	using Label::Label;
 
 
 	// Returns true if the text should be rendered
 	// Changes the enterPressed variable to true if enter was pressed
 	bool processKeyEvent(const SDL_Event &event, bool *enterPressed, bool *shouldResizeTextbox);
-	
-	// Free textbox resources
-	void freeTextbox();
+
+
+	virtual void processEnterPressedEvent(Keyboard &keyboard);
+	virtual void drawTextbox(SDL_Renderer *renderer);
+};
+
+
+class ConfigFileTextbox : public Textbox {
+public:
+	using Textbox::Textbox;
+
+
+	void processEnterPressedEvent(Keyboard &keyboard);
+	void drawTextbox(SDL_Renderer *renderer);
+};
+
+class DirectoryWithFilesTextbox : public Textbox {
+public:
+	using Textbox::Textbox;
+
+
+	void processEnterPressedEvent(Keyboard &keyboard);
+	void drawTextbox(SDL_Renderer *renderer);
+};
+
+class RecordFilePathTextbox : public Textbox {
+public:
+	using Textbox::Textbox;
+
+
+	void processEnterPressedEvent(Keyboard &keyboard);
+	void drawTextbox(SDL_Renderer *renderer);
+};
+
+class PlayFileTextbox : public Textbox {
+public:
+	using Textbox::Textbox;
+
+
+	void processEnterPressedEvent(Keyboard &keyboard);
+	void drawTextbox(SDL_Renderer *renderer);
 };

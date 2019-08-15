@@ -19,23 +19,21 @@
 #include <thread>
 
 
-const size_t Keyboard::MAX_KEYS = 88;
-const size_t Keyboard::CALLBACK_SIZE = 256;
-
-
 // The callback function internally called by SDL to get audio to be played 
 void audio_callback(void *userData, Uint8 *bufferToBePlayed, int bytes) {
 #if DEBUG
-	GlobalVariables::LOGGER << "In audio_callback()..." << std::endl;
+	std::ofstream& logger = LoggerClass::getLogger();
+	logger << "In audio_callback()..." << std::endl;
 #endif
 	static_cast<Keyboard *>(userData)->playPressedKeysCallback(bufferToBePlayed, bytes);
 #if DEBUG
-	GlobalVariables::LOGGER << "Exit audio_callback()..." << std::endl;
+	logger << "Exit audio_callback()..." << std::endl;
 #endif
 }
 
 
 Keyboard::Keyboard(SDL_Window *window, SDL_Renderer *renderer) {
+	std::ofstream& logger = LoggerClass::getLogger();
 	keys = nullptr;
 
 	audioFromFileCVT = nullptr;
@@ -56,28 +54,28 @@ Keyboard::Keyboard(SDL_Window *window, SDL_Renderer *renderer) {
 
 	keyPressedByMouse = nullptr;
 	recordStartTime = 0;
-	keySetWindowTextColor = GlobalVariables::WHITE;
+	keySetWindowTextColor = GlobalConstants::WHITE;
 	textboxWithFocus = nullptr;
 
 	if (window == nullptr) {
 		throw std::invalid_argument("Keyboard couldn't be initalized because window does not exist.");
 	}
 
-	this->configFileTextbox = new Textbox("TEXTBOX WITH PATH TO THE CONFIG FILE");
-	this->directoryWithFilesTextbox = new Textbox("TEXTBOX WITH PATH TO THE DIRECTORY CONTAINING FILES");
-	this->recordFilePathTextbox = new Textbox("TEXTBOX WITH PATH TO THE RECORDED FILE");
-	this->playFileTextbox = new Textbox("TEXTBOX WITH PATH TO THE FILE TO BE PLAYED");
+	this->configFileTextbox = ConfigFileTextbox("TEXTBOX WITH PATH TO THE CONFIG FILE");
+	this->directoryWithFilesTextbox = DirectoryWithFilesTextbox("TEXTBOX WITH PATH TO THE DIRECTORY CONTAINING FILES");
+	this->recordFilePathTextbox = RecordFilePathTextbox("TEXTBOX WITH PATH TO THE RECORDED FILE");
+	this->playFileTextbox = PlayFileTextbox("TEXTBOX WITH PATH TO THE FILE TO BE PLAYED");
 	this->audioPlayingLabel = Label("");
-	GlobalVariables::LOGGER << "resizeTextboxes()...: ";
+	logger << "resizeTextboxes()...: ";
 	resizeTextboxes();
-	GlobalVariables::LOGGER << "resizeTextboxes() done, SDL error: " << SDL_GetError() << std::endl;
-	GlobalVariables::LOGGER << "Initializing HW..." << std::endl;
+	logger << "resizeTextboxes() done, SDL error: " << SDL_GetError() << std::endl;
+	logger << "Initializing HW..." << std::endl;
 	initAudioHW();
-	GlobalVariables::LOGGER << "HW initialized, SDL error: " << SDL_GetError() << std::endl;
-	GlobalVariables::LOGGER << "Calling initKeyboard()...";
+	logger << "HW initialized, SDL error: " << SDL_GetError() << std::endl;
+	logger << "Calling initKeyboard()...";
 	int tmp = 0;					// Not Ideal
 	initKeyboard("", &tmp);
-	GlobalVariables::LOGGER << "initKeyboard() ended, SDL error was: " << SDL_GetError() << std::endl;
+	logger << "initKeyboard() ended, SDL error was: " << SDL_GetError() << std::endl;
 }
 
 
@@ -89,7 +87,8 @@ void Keyboard::setRenderer() {
 
 
 void Keyboard::initAudioHW() {
-	GlobalVariables::LOGGER << "Setting audioSpec...";
+	std::ofstream& logger = LoggerClass::getLogger();
+	logger << "Setting audioSpec...";
 	this->audioSpec = new SDL_AudioSpec();
 
 	audioSpec->freq = 22050;				// number of samples per second
@@ -99,22 +98,22 @@ void Keyboard::initAudioHW() {
 	audioSpec->samples = CALLBACK_SIZE;		// buffer-size
 	audioSpec->userdata = this;				// counter, keeping track of current sample number
 	audioSpec->callback = audio_callback;	// function SDL calls periodically to refill the buffer
-	GlobalVariables::LOGGER << "audioSpec set successfully" << std::endl;
-	GlobalVariables::LOGGER << "SDL_Error: " << SDL_GetError() << std::endl;
+	logger << "audioSpec set successfully" << std::endl;
+	logger << "SDL_Error: " << SDL_GetError() << std::endl;
 
-	GlobalVariables::LOGGER << "Opening audio device...";
+	logger << "Opening audio device...";
 	this->audioDevID = SDL_OpenAudioDevice(nullptr, 0, this->audioSpec, this->audioSpec, 0);
-	GlobalVariables::LOGGER << "Audio device opened" << std::endl;
-	GlobalVariables::LOGGER << "SDL_Error: " << SDL_GetError() << std::endl;
+	logger << "Audio device opened" << std::endl;
+	logger << "SDL_Error: " << SDL_GetError() << std::endl;
 
 	for (size_t i = 0; i < this->audioSpec->channels; i++) {
 		currentlyUnpressedKeys.push_back(std::vector<Sint32>());
 	}
 
-	GlobalVariables::LOGGER << "Audio device can start playing audio soon...";
+	logger << "Audio device can start playing audio soon...";
 	SDL_PauseAudioDevice(this->audioDevID, 0);			// Start playing the audio
-	GlobalVariables::LOGGER << "Callback function will be now regularly called" << std::endl;
-	GlobalVariables::LOGGER << "SDL_Error: " << SDL_GetError() << std::endl;
+	logger << "Callback function will be now regularly called" << std::endl;
+	logger << "SDL_Error: " << SDL_GetError() << std::endl;
 }
 
 // Sets blackKeysCount and whiteKeysCount properties
@@ -213,7 +212,8 @@ void Keyboard::convertAudioAndSaveMemory(SDL_AudioCVT *audioCVT, Uint32 currentC
 	}
 
 	SDL_ConvertAudio(audioCVT);
-	if (audioCVT->len_cvt != currentCVTBufferLen) {				// The converting usually needs more space than needed, so we just copy the buffer content to smaller buffer
+	// The converting usually needs more space than needed, so we just copy the buffer content to smaller buffer
+	if (audioCVT->len_cvt != (int)currentCVTBufferLen) {				
 		Uint8 *convertedBuffer = new Uint8[audioCVT->len_cvt];
 		int i;
 		for (i = 0; i < audioCVT->len_cvt; i++) {
@@ -226,38 +226,10 @@ void Keyboard::convertAudioAndSaveMemory(SDL_AudioCVT *audioCVT, Uint32 currentC
 	// Else the lengths are the same, no need to the anything
 }
 
-
-void Keyboard::processEnterPressedEvent() {
-	if (this->textboxWithFocus == this->configFileTextbox) {
-		int totalLines = 0;
-		this->readConfigfile(&totalLines);
-		this->configFileTextbox->hasFocus = false;
-		drawWindow();
-	}
-	else if (this->textboxWithFocus == this->directoryWithFilesTextbox) {
-		setKeySoundsFromDirectory();
-		this->directoryWithFilesTextbox->hasFocus = false;
-	}
-	else if (this->textboxWithFocus == this->recordFilePathTextbox) {
-		this->recordFilePathTextbox->hasFocus = false;
-	}
-	else if (this->textboxWithFocus == this->playFileTextbox) {
-		this->playFileTextbox->hasFocus = false;
-		this->playFile(this->playFileTextbox->text);
-	}
-	else {
-		throw std::invalid_argument("Unknown textbox");
-	}
-
-	SDL_StopTextInput();
-	this->textboxWithFocus = nullptr;
-}
-
 void Keyboard::setKeySoundsFromDirectory() {
-	std::string path;
 	if (keys != nullptr) {
 		size_t i = 0;
-		for (const auto &element : std::experimental::filesystem::directory_iterator(this->directoryWithFilesTextbox->text)) {
+		for (const auto &element : std::experimental::filesystem::directory_iterator(this->directoryWithFilesTextbox.text)) {
 			std::string path = element.path().string();
 			int extensionIndex = path.size() - 4;
 			if (extensionIndex > 0 && path.substr(extensionIndex) == ".wav") {
@@ -278,12 +250,14 @@ void Keyboard::checkEvents(const SDL_Event &event) {
 		if (this->textboxWithFocus != nullptr) {
 			this->shouldRedrawTextboxes = this->textboxWithFocus->processKeyEvent(event, &enterPressed, &shouldResizeTextboxes);
 			if (enterPressed) {
-				processEnterPressedEvent();
+				
+				this->textboxWithFocus->processEnterPressedEvent(*this);
 			}
 		}
 		break;
 	case SDL_KEYDOWN:
 #if DEBUG
+		std::ofstream& logger = LoggerClass::getLogger();
 		std::cout << "Key Pressed" << std::endl;
 		std::cout << event.key.keysym.mod << std::endl;
 		std::cout << event.key.keysym.scancode << std::endl;
@@ -292,7 +266,7 @@ void Keyboard::checkEvents(const SDL_Event &event) {
 		if (this->textboxWithFocus != nullptr) {
 			this->shouldRedrawTextboxes = this->textboxWithFocus->processKeyEvent(event, &enterPressed, &shouldResizeTextboxes);
 			if (enterPressed) {
-				processEnterPressedEvent();
+				this->textboxWithFocus->processEnterPressedEvent(*this);
 			}
 		}
 		else {
@@ -364,25 +338,25 @@ void Keyboard::resizeTextboxes() {
 	int buttonW = windowWidth;
 	int buttonH = blackKeyHeight / 4;
 
-	this->configFileTextbox->findFittingFont(&textW, &textH, buttonW, buttonH);
+	this->configFileTextbox.findFittingFont(&textW, &textH, buttonW, buttonH);
 	textY = this->windowHeight - buttonH + (buttonH - textH) / 2;
 	buttonY = windowHeight - buttonH;
-	this->configFileTextbox->setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
+	this->configFileTextbox.setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
 
-	this->directoryWithFilesTextbox->findFittingFont(&textW, &textH, buttonW, buttonH);
+	this->directoryWithFilesTextbox.findFittingFont(&textW, &textH, buttonW, buttonH);
 	textY = this->windowHeight - 2 * buttonH + (buttonH - textH) / 2;
 	buttonY = this->windowHeight - 2 * buttonH;
-	this->directoryWithFilesTextbox->setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
+	this->directoryWithFilesTextbox.setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
 
-	this->recordFilePathTextbox->findFittingFont(&textW, &textH, buttonW, buttonH);
+	this->recordFilePathTextbox.findFittingFont(&textW, &textH, buttonW, buttonH);
 	textY = this->windowHeight - 3 * buttonH + (buttonH - textH) / 2;
 	buttonY = this->windowHeight - 3 * buttonH;
-	this->recordFilePathTextbox->setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
+	this->recordFilePathTextbox.setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
 
-	this->playFileTextbox->findFittingFont(&textW, &textH, buttonW, buttonH);
+	this->playFileTextbox.findFittingFont(&textW, &textH, buttonW, buttonH);
 	textY = this->windowHeight - 4 * buttonH + (buttonH - textH) / 2;
 	buttonY = this->windowHeight - 4 * buttonH;
-	this->playFileTextbox->setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
+	this->playFileTextbox.setSizes(textX, textY, textW, textH, buttonX, buttonY, buttonW, buttonH);
 
 	buttonX = this->windowWidth / 3;
 	buttonW = this->windowWidth / 3;
@@ -418,15 +392,15 @@ int Keyboard::initKeyboard(const std::string &configFilename, int *totalLinesInF
 // Then on each row is 1 key:
 // Tries to read config file which is in the configFileTextbox
 int Keyboard::readConfigfile(int *totalLinesInFile) {
-	std::ifstream stream(this->configFileTextbox->text);
+	std::ifstream stream(this->configFileTextbox.text);
 
 	if (stream.is_open()) {
 		std::string line;
-		int totalLineCountInConfig = 0;
+		Uint32 totalLineCountInConfig = 0;
 
 		if (std::getline(stream, line)) {
 			try {
-				totalLineCountInConfig = std::stoi(line, nullptr, 10);
+				totalLineCountInConfig = std::stoul(line, nullptr, 10);
 			}
 			catch (std::exception e) {
 				this->defaultInit(MAX_KEYS, true);
@@ -438,14 +412,14 @@ int Keyboard::readConfigfile(int *totalLinesInFile) {
 			}
 			else if (totalLineCountInConfig > MAX_KEYS) {
 				totalLineCountInConfig = MAX_KEYS;
-				return Keyboard::processKeysInConfigFile(stream, line, totalLineCountInConfig, true, totalLinesInFile);		// Init only the first MAX_KEYS keys
+				return Keyboard::processKeysInConfigFile(stream, line, totalLineCountInConfig, totalLinesInFile);		// Init only the first MAX_KEYS keys
 			}
 		}
 		else {				// Empty file
 			return this->defaultInit(MAX_KEYS, true);
 		}
 
-		return Keyboard::processKeysInConfigFile(stream, line, totalLineCountInConfig, false, totalLinesInFile);		// Not to many files in config file
+		return Keyboard::processKeysInConfigFile(stream, line, totalLineCountInConfig, totalLinesInFile);		// Not to many files in config file
 	}
 
 	return 1;
@@ -456,7 +430,7 @@ int Keyboard::readConfigfile(int *totalLinesInFile) {
 // Returns 1 if expectedLineCountInConfig < real line count in file
 // Returns 0 if expectedLineCountInConfig == real line count in file
 // Returns -1 if some error happened (and logs it)
-int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, int expectedLineCountInConfig, bool tooManyKeys, int *totalLinesInFile) {
+int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, size_t expectedLineCountInConfig, int *totalLinesInFile) {
 	bool hasRecordKey = false;
 	defaultInit(expectedLineCountInConfig, false);
 	std::string filename;
@@ -469,10 +443,10 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 	size_t currentToken;
 	size_t firstSpaceInd = 0;
 
-	int currLine = 0;
+	size_t currLine = 0;
 	int keyIndex = 0;		// keyIndex, because of differences in indexing between key array and indexing in config file
 	// This is pretty awful indexing, but it is my bad, choosed bad format of config file (respectively that record key will be 0th index)
-	for (currLine = 0; keyIndex < expectedLineCountInConfig; currLine++, keyIndex++) {			
+	for (currLine = 0; keyIndex < (int)expectedLineCountInConfig; currLine++, keyIndex++) {			
 		if (hasRecordKey) {
 			keyIndex = currLine - 1;			// -1 because the record file is at index 0
 		}
@@ -504,19 +478,23 @@ int Keyboard::processKeysInConfigFile(std::ifstream &stream, std::string &line, 
 							keyNumber = std::stoi(token, nullptr, 10);
 						}
 						catch (std::exception ex) {
-							GlobalVariables::LOGGER << "Problem with config file: Invalid key number in config file" << std::endl;
+							std::ofstream& logger = LoggerClass::getLogger();
+							logger << "Problem with config file: Invalid key number in config file" << std::endl;
 							return -1;
 						}
 						if (keyNumber < 0) {
-							GlobalVariables::LOGGER << "Problem with config file: Invalid key number (only >= 0 are supported)" << std::endl;
+							std::ofstream& logger = LoggerClass::getLogger();
+							logger << "Problem with config file: Invalid key number (only >= 0 are supported)" << std::endl;
 							return -1;
 						}
 						else if (keyNumber <= lastKeyNumber) {
-							GlobalVariables::LOGGER << "Problem with config file: Numbers aren't in sequential order." << std::endl;
+							std::ofstream& logger = LoggerClass::getLogger();
+							logger << "Problem with config file: Numbers aren't in sequential order." << std::endl;
 							return -1;
 						}
-						else if (keyNumber > expectedLineCountInConfig) {
-							GlobalVariables::LOGGER << "Problem with config file: Too many keys in file." << std::endl;
+						else if (keyNumber > (int)expectedLineCountInConfig) {
+							std::ofstream& logger = LoggerClass::getLogger();
+							logger << "Problem with config file: Too many keys in file." << std::endl;
 							return -1;
 						}
 						// If the first key was record key
@@ -623,7 +601,8 @@ bool Keyboard::setModifiersForKeyFromConfigFile(Key *key, const std::string &tok
 				key->keysym.mod |= (KMOD_LSHIFT | KMOD_RSHIFT);
 			}
 			else {
-				GlobalVariables::LOGGER << "Invalid modifier while processing config file" << std::endl;
+				std::ofstream& logger = LoggerClass::getLogger();
+				logger << "Invalid modifier while processing config file" << std::endl;
 				return false;
 			}
 		}
@@ -640,11 +619,13 @@ bool Keyboard::setControlForKeyFromConfigFile(Key *key, const std::string &token
 			fNum = std::stoi(token.substr(1, std::string::npos));
 		}
 		catch (std::exception ex) {
-			GlobalVariables::LOGGER << "Invalid control keys while processing config file: F key number isn't supported or it can't be converted to number" << std::endl;
+			std::ofstream& logger = LoggerClass::getLogger();
+			logger << "Invalid control keys while processing config file: F key number isn't supported or it can't be converted to number" << std::endl;
 			return false;
 		}
 		if (fNum <= 0 || fNum >= 25) {
-			GlobalVariables::LOGGER << "Invalid control keys while processing config file: F key number isn't supported" << std::endl;
+			std::ofstream& logger = LoggerClass::getLogger();
+			logger << "Invalid control keys while processing config file: F key number isn't supported" << std::endl;
 			return false;
 		}
 
@@ -817,8 +798,8 @@ constexpr void Keyboard::setKeyLocation(int *currX, int index) {
 }
 
 
-int Keyboard::defaultInit(int totalKeys, bool initAudioBuffer) {
-	int currKey = 0;	
+int Keyboard::defaultInit(size_t totalKeys, bool initAudioBuffer) {
+	size_t currKey = 0;	
 	int currX = 0;
 
 	if (this->keyCount != totalKeys || this->keys == nullptr) {
@@ -827,12 +808,12 @@ int Keyboard::defaultInit(int totalKeys, bool initAudioBuffer) {
 		}
 
 		this->keys = new Key[totalKeys];
-		for (int i = 0; i < totalKeys; i++) {
+		for (size_t i = 0; i < totalKeys; i++) {
 			keys[i].initKey();
 		}
 	}
 	else {
-		for (int i = 0; i < totalKeys; i++) {
+		for (size_t i = 0; i < totalKeys; i++) {
 			keys[i].freeKey();
 		}
 	}
@@ -858,7 +839,6 @@ int Keyboard::defaultInit(int totalKeys, bool initAudioBuffer) {
 
 		this->keys[currKey].isDefaultSound = initAudioBuffer;
 		this->keys[currKey].ID = currKey;
-		char *c = nullptr;
 		this->keys[currKey].pressCount = 0;
 		defaultInitControlKeys(currKey);	
 
@@ -881,7 +861,7 @@ int Keyboard::defaultInit(int totalKeys, bool initAudioBuffer) {
 }
 
 void Keyboard::initKeyWithDefaultAudio(Key *key) {
-	const size_t numberOfSeconds = 10;
+	constexpr size_t numberOfSeconds = 10;
 	if (key != nullptr) {
 		key->freeKey();
 		generateTone(this->audioSpec, key->ID, numberOfSeconds, &key->audioConvert);
@@ -892,19 +872,21 @@ void Keyboard::initKeyWithDefaultAudio(Key *key) {
 int Keyboard::mainCycle() {
 	SDL_Event event;
 	this->quit = false;
-	GlobalVariables::LOGGER << "Drawing window...";
+	std::ofstream& logger = LoggerClass::getLogger();
+
+	logger << "Drawing window...";
 	drawWindow();
-	GlobalVariables::LOGGER << "Window drawn successfully" << std::endl;
+	logger << "Window drawn successfully" << std::endl;
 	bool render = false;
 
-	GlobalVariables::LOGGER << "\"Endless\" loop starting..." << std::endl;
+	logger << "\"Endless\" loop starting..." << std::endl;
 	while (!this->quit) {
 #if DEBUG
-		GlobalVariables::LOGGER << "Calling SDL_PollEvent...";
+		logger << "Calling SDL_PollEvent...";
 #endif
 		if (SDL_PollEvent(&event)) {
 #if DEBUG
-			GlobalVariables::LOGGER << "SDL_PollEvent ended." << std::endl;
+			logger << "SDL_PollEvent ended." << std::endl;
 #endif
 
 			shouldRedrawKeys = false;
@@ -913,61 +895,61 @@ int Keyboard::mainCycle() {
 			render = false;
 
 #if DEBUG
-			GlobalVariables::LOGGER << "Calling checkEvents()..." << std::endl;
+			logger << "Calling checkEvents()..." << std::endl;
 #endif
 			checkEvents(event);
 #if DEBUG
-			GlobalVariables::LOGGER << "checkEvents() ended." << std::endl;
-			GlobalVariables::LOGGER << "Checking what needs to be redrawed..." << std::endl;
+			logger << "checkEvents() ended." << std::endl;
+			logger << "Checking what needs to be redrawed..." << std::endl;
 #endif
 
 
 			if (shouldRedrawKeys) {
 #if DEBUG
-				GlobalVariables::LOGGER << "Calling drawKeys()...";
+				logger << "Calling drawKeys()...";
 #endif
 				drawKeys();
 #if DEBUG
-				GlobalVariables::LOGGER << "drawKeys() ended." << std::endl;
+				logger << "drawKeys() ended." << std::endl;
 #endif
 				render = true;
 			}
 			if (shouldRedrawTextboxes) {
 #if DEBUG
-				GlobalVariables::LOGGER << "Calling drawTextboxes()...";
+				logger << "Calling drawTextboxes()...";
 #endif
 				drawTextboxes();
 #if DEBUG
-				GlobalVariables::LOGGER << "drawTextboxes() ended." << std::endl;
+				logger << "drawTextboxes() ended." << std::endl;
 #endif
 				render = true;
 			}
 			if (shouldRedrawKeyLabels) {
 #if DEBUG
-				GlobalVariables::LOGGER << "Calling drawKeyLabels()...";
+				logger << "Calling drawKeyLabels()...";
 #endif
 				drawKeyLabels();
 #if DEBUG
-				GlobalVariables::LOGGER << "drawKeyLabels() ended." << std::endl;
+				logger << "drawKeyLabels() ended." << std::endl;
 #endif
 				render = true;
 			}
 			if (render) {
 #if DEBUG
-				GlobalVariables::LOGGER << "Calling SDL_RenderPresent()...";
+				logger << "Calling SDL_RenderPresent()...";
 #endif
 				SDL_RenderPresent(this->renderer);
 #if DEBUG
-				GlobalVariables::LOGGER << "SDL_RenderPresent ended.";
+				logger << "SDL_RenderPresent ended.";
 #endif
 			}
 		}
 	}
 
-	GlobalVariables::LOGGER << "\"Endless\" loop ended" << std::endl;
-	GlobalVariables::LOGGER << "Freeing keyboard resources (calling freeKeyboard)...";
+	logger << "\"Endless\" loop ended" << std::endl;
+	logger << "Freeing keyboard resources (calling freeKeyboard)...";
 	this->freeKeyboard();
-	GlobalVariables::LOGGER << "Keyboard resources freed" << std::endl;
+	logger << "Keyboard resources freed" << std::endl;
 	return 0;
 }
 
@@ -1039,20 +1021,20 @@ bool Keyboard::checkForMods(const Uint16 keyMod, const Uint16 keyEventMod) {
 }
 
 
-void Keyboard::textboxPressAction(Textbox *clickedTextbox, const SDL_MouseButtonEvent &event) {
+void Keyboard::textboxPressAction(Textbox &clickedTextbox, const SDL_MouseButtonEvent &event) {
 	this->shouldRedrawTextboxes = true;
 
-	clickedTextbox->hasFocus = !clickedTextbox->hasFocus;
-	bool newFocus = clickedTextbox->hasFocus;
+	clickedTextbox.hasFocus = !clickedTextbox.hasFocus;
+	bool newFocus = clickedTextbox.hasFocus;
 
-	this->directoryWithFilesTextbox->hasFocus = false;
-	this->configFileTextbox->hasFocus = false;
-	this->recordFilePathTextbox->hasFocus = false;
-	this->playFileTextbox->hasFocus = false;
+	this->directoryWithFilesTextbox.hasFocus = false;
+	this->configFileTextbox.hasFocus = false;
+	this->recordFilePathTextbox.hasFocus = false;
+	this->playFileTextbox.hasFocus = false;
 
 	if (newFocus) {
-		clickedTextbox->hasFocus = true;
-		this->textboxWithFocus = clickedTextbox;
+		clickedTextbox.hasFocus = true;
+		this->textboxWithFocus = &clickedTextbox;		// TODO: Not sure
 	}
 	else {
 		this->textboxWithFocus = nullptr;
@@ -1069,30 +1051,32 @@ void Keyboard::textboxPressAction(Textbox *clickedTextbox, const SDL_MouseButton
 Key * Keyboard::checkMouseClickAndPerformAction(const SDL_MouseButtonEvent &event) {
 	// First check textboxes
 	// The else branch is executed when no textbox was clicked.
-	if (this->configFileTextbox->button.checkMouseClick(event)) {
+	if (this->configFileTextbox.button.checkMouseClick(event)) {
 		textboxPressAction(this->configFileTextbox, event);
 		return nullptr;
 	}
-	else if (this->directoryWithFilesTextbox->button.checkMouseClick(event)) {
+	else if (this->directoryWithFilesTextbox.button.checkMouseClick(event)) {
 		textboxPressAction(this->directoryWithFilesTextbox, event);
 		return nullptr;
 	}
-	else if (this->recordFilePathTextbox->button.checkMouseClick(event)) {
+	else if (this->recordFilePathTextbox.button.checkMouseClick(event)) {
 		textboxPressAction(this->recordFilePathTextbox, event);
 		return nullptr;
 	}
-	else if (this->playFileTextbox->button.checkMouseClick(event)) {
+	else if (this->playFileTextbox.button.checkMouseClick(event)) {
 		textboxPressAction(this->playFileTextbox, event);
 		return nullptr;
 	}
 	else {
-		if (this->configFileTextbox->hasFocus || this->directoryWithFilesTextbox->hasFocus || this->playFileTextbox->hasFocus || this->recordFilePathTextbox->hasFocus) {
+		// TODO: podle me zbytecny kdyz to je hasFocus == true aspon u jednoho tak textboxWithFocus != nullptr
+		//if (this->configFileTextbox->hasFocus || this->directoryWithFilesTextbox->hasFocus || this->playFileTextbox->hasFocus || this->recordFilePathTextbox->hasFocus) {
+		if (this->textboxWithFocus != nullptr) {
 			this->shouldRedrawTextboxes = true;
 		}
-		this->directoryWithFilesTextbox->hasFocus = false;
-		this->configFileTextbox->hasFocus = false;
-		this->recordFilePathTextbox->hasFocus = false;
-		this->playFileTextbox->hasFocus = false;
+		this->directoryWithFilesTextbox.hasFocus = false;
+		this->configFileTextbox.hasFocus = false;
+		this->recordFilePathTextbox.hasFocus = false;
+		this->playFileTextbox.hasFocus = false;
 
 		SDL_StopTextInput();
 		this->textboxWithFocus = nullptr;
@@ -1289,18 +1273,19 @@ void Keyboard::addToUnpressedKeys(Key *key) {
 
 void Keyboard::playPressedKeysCallback(Uint8 *bufferToBePlayed, int bytes) {
 #if DEBUG
-	GlobalVariables::LOGGER << "In playPressedKeysCallback()..." << std::endl;
+	std::ofstream& logger = LoggerClass::getLogger();
+	logger << "In playPressedKeysCallback()..." << std::endl;
 #endif
 	Key *key;
 	if (this->currentlyPressedKeys.size() == 0) {
 #if DEBUG
-		GlobalVariables::LOGGER << "Filling buffer with silence..." << std::endl;
+		logger << "Filling buffer with silence..." << std::endl;
 #endif
 		for (int i = 0; i < bytes; i++) {
 			bufferToBePlayed[i] = this->audioSpec->silence;
 		}
 #if DEBUG
-		GlobalVariables::LOGGER << "Buffer filled" << std::endl;
+		logger << "Buffer filled" << std::endl;
 #endif
 		// TODO: What is really interesting is, that if I add this part of code, there is insane amount of crackling. Function
 		// is done much faster than the variant without this part, and the else part is also much slower, so maybe it is because the buffer is filled too fast ?? 
@@ -1311,7 +1296,7 @@ void Keyboard::playPressedKeysCallback(Uint8 *bufferToBePlayed, int bytes) {
 	}
 	else {
 #if DEBUG
-		GlobalVariables::LOGGER << "Filling buffer with key sounds..." << std::endl;
+		logger << "Filling buffer with key sounds..." << std::endl;
 #endif
 		key = this->currentlyPressedKeys[0];
 		int lastIndex = key->startOfCurrAudio + bytes;
@@ -1389,7 +1374,7 @@ void Keyboard::playPressedKeysCallback(Uint8 *bufferToBePlayed, int bytes) {
 
 			this->audioPlayingLabel.hasFocus = false;
 			audioPlayingLabel.text = "";
-			audioPlayingLabel.drawTextWithBackground(this->renderer, GlobalVariables::BACKGROUND_BLUE, GlobalVariables::BACKGROUND_BLUE, GlobalVariables::BACKGROUND_BLUE);
+			audioPlayingLabel.drawTextWithBackground(this->renderer, GlobalConstants::BACKGROUND_BLUE, GlobalConstants::BACKGROUND_BLUE, GlobalConstants::BACKGROUND_BLUE);
 			SDL_RenderPresent(this->renderer);
 		}
 	}
@@ -1446,25 +1431,25 @@ void Keyboard::reduceCrackling(Uint8 *bufferToBePlayed, int bytes) {
 					case AUDIO_U8:
 					{			// I need to define the scope, so the jump to this address will have initialized local variable, else C2360 error
 						Uint8 *p = static_cast<Uint8 *>(&bufferOfCallbackSize[index]);
-						*p = vals[ch];
+						*p = static_cast<Uint8>(vals[ch]);
 						break;
 					}
 					case AUDIO_S8:
 					{
 						Sint8 *p = reinterpret_cast<Sint8 *>(&bufferOfCallbackSize[index]);
-						*p = vals[ch];					
+						*p = static_cast<Sint8>(vals[ch]);
 						break;
 					}
 					case AUDIO_U16SYS:
 					{
 						Uint16 *p = reinterpret_cast<Uint16 *>(&bufferOfCallbackSize[index]);
-						*p = vals[ch];
+						*p = static_cast<Uint16>(vals[ch]);
 						break;
 					}
 					case AUDIO_S16SYS:
 					{
 						Sint16 *p = reinterpret_cast<Sint16 *>(&bufferOfCallbackSize[index]);
-						*p = vals[ch];
+						*p = static_cast<Sint16>(vals[ch]);
 						break;
 					}
 					case AUDIO_S32SYS:
@@ -1528,12 +1513,12 @@ void Keyboard::drawBackground() {
 
 
 void Keyboard::drawTextboxes() {
-	playFileTextbox->drawTextWithBackground(this->renderer, GlobalVariables::WHITE, GlobalVariables::RED, GlobalVariables::BLACK);
-	configFileTextbox->drawTextWithBackground(this->renderer, GlobalVariables::WHITE, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE);
-	directoryWithFilesTextbox->drawTextWithBackground(this->renderer, GlobalVariables::WHITE, GlobalVariables::RED, GlobalVariables::BLACK);
-	recordFilePathTextbox->drawTextWithBackground(this->renderer, GlobalVariables::WHITE, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE);
+	playFileTextbox.drawTextbox(this->renderer);
+	configFileTextbox.drawTextbox(this->renderer);
+	directoryWithFilesTextbox.drawTextbox(this->renderer);
+	recordFilePathTextbox.drawTextbox(this->renderer);
 
-	audioPlayingLabel.drawTextWithBackground(this->renderer, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE, GlobalVariables::BACKGROUND_BLUE);
+	audioPlayingLabel.drawTextWithBackground(this->renderer, GlobalConstants::RED, GlobalConstants::BACKGROUND_BLUE, GlobalConstants::BACKGROUND_BLUE);
 }
 
 
@@ -1596,8 +1581,8 @@ void Keyboard::startRecording(Uint32 timestamp) {
 
 void Keyboard::endRecording() {
 	this->isRecording = false;
-	createWavFileFromAudioBuffer(this->recordFilePathTextbox->text);
-	createKeyFileFromRecordedKeys(this->recordFilePathTextbox->text);
+	createWavFileFromAudioBuffer(this->recordFilePathTextbox.text);
+	createKeyFileFromRecordedKeys(this->recordFilePathTextbox.text);
 	this->record.clear();
 	this->recordedKeys.clear();
 }
@@ -1614,7 +1599,7 @@ std::ostream& write_word(std::ostream& outs, Word value, unsigned size = sizeof(
 
 // Example for reading wav file http://www.cplusplus.com/forum/beginner/166954/
 // Wav file format reference page http://www-mmsp.ece.mcgill.ca/Documents/AudioFormats/WAVE/WAVE.html
-void Keyboard::createWavFile(const std::string &path, std::vector<Uint8> record) {
+void Keyboard::createWavFile(const std::string &path, std::vector<Uint8> audioSamples) {
 	std::ofstream f(path + ".wav", std::ios::binary);
 
 	// Write the file headers
@@ -1635,26 +1620,26 @@ void Keyboard::createWavFile(const std::string &path, std::vector<Uint8> record)
 	f << "data";
 	bool needsPadding = false;
 	// Write size of data in bytes
-	if (record.size() % 2 == 1) {
+	if (audioSamples.size() % 2 == 1) {
 		needsPadding = true;
-		write_word(f, record.size() + 1, 4);			
+		write_word(f, audioSamples.size() + 1, 4);			
 	}
 	else {
-		write_word(f, record.size(), 4);
+		write_word(f, audioSamples.size(), 4);
 	}
 
 	// Now write all samples to the file, in little endian format
 	size_t sampleSizeInBytes = sampleSizeInBits / 8;
 	size_t i = 0;
-	while (i < record.size()) {
+	while (i < audioSamples.size()) {
 		for (size_t j = 0; j < this->audioSpec->channels; j++) {
 			size_t sampleIndex = i;
 			for (size_t k = 0; k < sampleSizeInBytes; k++) {
 				if (SDL_AUDIO_ISBIGENDIAN(this->audioSpec->format)) {		// Big endian, it is needed to write bytes in opposite direction
-					f << record[sampleIndex + sampleSizeInBytes - k - 1];
+					f << audioSamples[sampleIndex + sampleSizeInBytes - k - 1];
 				}
 				else {
-					f << record[i];
+					f << audioSamples[i];
 				}
 
 				i++;
@@ -1675,15 +1660,15 @@ void Keyboard::createWavFile(const std::string &path, std::vector<Uint8> record)
 }
 
 
-void Keyboard::createKeyFile(const std::string &path, std::vector<TimestampAndID> &recordedKeys) {
-	if (recordedKeys.size() > 0) {
+void Keyboard::createKeyFile(const std::string &path, std::vector<TimestampAndID> &keysForKeyFile) {
+	if (keysForKeyFile.size() > 0) {
 		std::ofstream f;
 		std::string s = path + ".keys";
 		f.open(s);
-		for (size_t i = 0; i < recordedKeys.size() - 1; i++) {
-			f << recordedKeys[i].timestamp << " " << recordedKeys[i].ID << " " << recordedKeys[i].keyEventType << std::endl;
+		for (size_t i = 0; i < keysForKeyFile.size() - 1; i++) {
+			f << keysForKeyFile[i].timestamp << " " << keysForKeyFile[i].ID << " " << keysForKeyFile[i].keyEventType << std::endl;
 		}
-		f << recordedKeys[recordedKeys.size() - 1].timestamp << " " << recordedKeys[recordedKeys.size() - 1].ID << " " << recordedKeys[recordedKeys.size() - 1].keyEventType;
+		f << keysForKeyFile[keysForKeyFile.size() - 1].timestamp << " " << keysForKeyFile[keysForKeyFile.size() - 1].ID << " " << keysForKeyFile[keysForKeyFile.size() - 1].keyEventType;
 		f.close();
 	}
 }
@@ -1766,95 +1751,175 @@ void Keyboard::convert(SDL_AudioCVT *cvt, SDL_AudioSpec *spec, SDL_AudioSpec *de
 
 
 void Keyboard::playKeyFile(const std::string &path) {
+	std::ofstream& logger = LoggerClass::getLogger();
+
 	std::ifstream ifs;
 	ifs.open(path);
 	std::string line;
 	std::string token;
 	SDL_KeyboardEvent keyboardEvent;
 	keyboardEvent.repeat = 0;
-	Uint32 timestamp;
-	int keyID;
+	Uint32 timestamp = 0;
+	int keyID = 0;
 	KeyEventType keyET;
 	Uint32 uintET;
 	char delim = ' ';
 	size_t currToken = 0;
 	std::vector<SDL_KeyboardEvent> events;
 
+	bool isForCycleHeader = false;
+	bool isForCycle = false;
+
+	std::vector<std::tuple<Uint32, Uint32, Uint32, std::vector<SDL_KeyboardEvent>>> forCycles;
+	Uint32 forCycleStartTime = 0;
+	Uint32 rowCountInForCycle = 0;
+	size_t forCycleCurrLine = 0;
+	Uint32 forCycleCycleCount = 0;
+	Uint32 forCycleWaitTime = 0;
+
 	if (ifs.is_open()) {
 		while (std::getline(ifs, line, '\n')) {			// For every line
 			std::stringstream ss(line);
+			currToken = 0;
 			while (std::getline(ss, token, delim)) {	// Parse line
-				if (currToken % 3 == 0) {
-					try {
-						timestamp = std::stoul(token, nullptr, 10);
+				if (currToken == 0) {
+					if (token == "for") {
+						isForCycleHeader = true;
 					}
-					catch (std::exception e) {
-						GlobalVariables::LOGGER << "ERROR WHILE PARSING .KEYS FILE: Invalid timestamp in keys file" << std::endl;
-						ifs.close();
-						return;
+					else {
+						isForCycleHeader = false;
 					}
 				}
-				else if (currToken % 3 == 1) {
-					try {
-						keyID = std::stoi(token, nullptr, 10);
-						keyID = keyID - 1;			// Because in the file are indexes from 1, but in this program we index from 0.
+				if (isForCycleHeader) {
+					// TODO: Maybe later % 5, If I'd like to reuse the for cycles (call the multiple times with different parameters ... I would just have some label)
+					if (currToken % 5 == 1) {
+						try {
+							forCycleStartTime = std::stoul(token, nullptr, 10);						
+						}
+						catch (std::exception e) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Invalid start time of for cycle in keys file" << std::endl;
+							ifs.close();
+							return;
+						}
 					}
-					catch (std::exception e) {
-						GlobalVariables::LOGGER << "ERROR WHILE PARSING .KEYS FILE: Couldn't parse key number in keys file" << std::endl;
-						ifs.close();
-						return;
+					else if (currToken % 5 == 2) {
+						rowCountInForCycle = std::stoul(token, nullptr, 10);
 					}
-					if (keyID >= static_cast<int>(this->keyCount) || keyID < 0) {
-						GlobalVariables::LOGGER << "ERROR WHILE PARSING .KEYS FILE: Invalid number of key in keys file" << std::endl;
-						ifs.close();
-						return;
+					else if (currToken % 5 == 3) {
+						try {
+							forCycleCycleCount = std::stoul(token, nullptr, 10);
+						}
+						catch (std::exception e) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Invalid number of cycles of for cycle in keys file" << std::endl;
+							ifs.close();
+							return;
+						}
+					}
+					else if (currToken % 5 == 4) {
+						try {
+							forCycleWaitTime = std::stoul(token, nullptr, 10);
+							forCycles.push_back(std::tuple<Uint32, Uint32, Uint32, std::vector<SDL_KeyboardEvent>>(forCycleStartTime, 
+								forCycleCycleCount, forCycleWaitTime, std::vector<SDL_KeyboardEvent>()));
+						}
+						catch (std::exception e) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Invalid number of cycles of for cycle in keys file" << std::endl;
+							ifs.close();
+							return;
+						}
 					}
 				}
-				else if (currToken % 3 == 2) {
-					try {
-						uintET = std::stoul(token, nullptr, 10);
+				else {
+					if (currToken % 3 == 0) {
+						try {
+							timestamp = std::stoul(token, nullptr, 10);
+						}
+						catch (std::exception e) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Invalid timestamp in keys file" << std::endl;
+							ifs.close();
+							return;
+						}
 					}
-					catch (std::exception e) {
-						GlobalVariables::LOGGER << "ERROR WHILE PARSING .KEYS FILE: Couldn't parse event type" << std::endl;
-						ifs.close();
-						return;
+					else if (currToken % 3 == 1) {
+						try {
+							keyID = std::stoi(token, nullptr, 10);
+							keyID = keyID - 1;			// Because in the file are indexes from 1, but in this program we index from 0.
+						}
+						catch (std::exception e) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Couldn't parse key number in keys file" << std::endl;
+							ifs.close();
+							return;
+						}
+						if (keyID >= static_cast<int>(this->keyCount) || keyID < 0) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Invalid number of key in keys file: " << keyID << std::endl;
+							ifs.close();
+							return;
+						}
 					}
-					if (uintET > 2) {
-						GlobalVariables::LOGGER << "ERROR WHILE PARSING .KEYS FILE: Invalid event" << std::endl;
-						ifs.close();
-						return;
+					else if (currToken % 3 == 2) {
+						try {
+							uintET = std::stoul(token, nullptr, 10);						
+						}
+						catch (std::exception e) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Couldn't parse event type" << std::endl;
+							ifs.close();
+							return;
+						}
+						if (uintET > 2) {
+							logger << "ERROR WHILE PARSING .KEYS FILE: Invalid event" << std::endl;
+							ifs.close();
+							return;
+						}
+
+						keyET = static_cast<KeyEventType>(uintET);
+						switch (keyET) {
+						case KEY_PRESSED:
+							keyboardEvent.state = SDL_PRESSED;
+							keyboardEvent.type = SDL_KEYDOWN;
+							break;
+						case KEY_RELEASED:
+							keyboardEvent.state = SDL_RELEASED;
+							keyboardEvent.type = SDL_KEYUP;
+							break;
+						default:
+							ifs.close();
+							logger << "ERROR WHILE PARSING .KEYS FILE: Unknown event, shouldn't happen ... throwing exception" << std::endl;
+							throw std::invalid_argument("Unknown event, shouldn't happen.");		// throw exception, because this is something wrong with program			
+						}
 					}
-					keyET = static_cast<KeyEventType>(uintET);
 				}
 
 				currToken++;
 			}
 
-			switch (keyET) {
-			case KEY_PRESSED:
-				keyboardEvent.state = SDL_PRESSED;
-				keyboardEvent.type = SDL_KEYDOWN;
-				break;
-			case KEY_RELEASED:
-				keyboardEvent.state = SDL_RELEASED;
-				keyboardEvent.type = SDL_KEYUP;
-				break;
-			default:
-				ifs.close();
-				GlobalVariables::LOGGER << "ERROR WHILE PARSING .KEYS FILE: Unknown event, shouldn't happen ... throwing exception" << std::endl;
-				throw std::invalid_argument("Unknown event, shouldn't happen.");		// throw exception, because this is something wrong with program
-				break;
+			if (!isForCycleHeader) {			
+				keyboardEvent.timestamp = timestamp;
+				keyboardEvent.keysym = this->keys[keyID].keysym;
+				if (isForCycle) {					
+					if (forCycleCurrLine >= rowCountInForCycle) {
+						isForCycle = false;
+						isForCycleHeader = false;
+					}
+					else {
+						std::get<3>(forCycles.back()).push_back(keyboardEvent);
+						forCycleCurrLine++;
+					}					
+				}
+				else {
+					events.push_back(keyboardEvent);
+				}
 			}
-
-			keyboardEvent.repeat = 0;
-			keyboardEvent.timestamp = timestamp;
-			keyboardEvent.keysym = this->keys[keyID].keysym;
-
-			events.push_back(keyboardEvent);
+			else {
+				isForCycle = true;
+				isForCycleHeader = false;
+				forCycleCurrLine = 0;
+			}
 		}
 	}
 
-
+	
+	addForCyclesToEvents(forCycles, events);
+	std::sort(events.begin(), events.end(), SDL_KeyboardEventComparator);			// TODO: Nejsem si jisty jestli tu ma byt SDL_KeyboardEventComparator nebo &SDL_KeyboardEventComparator
+	logger << ".KEYS FILE: event count: " << events.size() << std::endl;
 	if (events.size() > 0) {
 		int audioLenInSecs = events.back().timestamp / 1000;
 		this->audioPlayingLabel.text = "AUDIO OF LENGTH " + std::to_string(audioLenInSecs) + " SECONDS IS BEING PLAYED";
@@ -1864,9 +1929,7 @@ void Keyboard::playKeyFile(const std::string &path) {
 
 		// Now play the key file, just fire the events at given timestamp
 		clock_t time;
-		Uint32 lastTimestamp = 0;
 		SDL_Event eventFromUser;
-		bool quit = false;
 
 		for (size_t i = 0; i < events.size(); i++) {
 			events[i].timestamp = CLOCKS_PER_SEC * events[i].timestamp / 1000;		// Convert it to the time we get from clock()
@@ -1904,12 +1967,57 @@ void Keyboard::playKeyFile(const std::string &path) {
 
 		this->audioPlayingLabel.hasFocus = false;
 		audioPlayingLabel.text = "";
-		audioPlayingLabel.drawTextWithBackground(this->renderer, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE, GlobalVariables::BACKGROUND_BLUE);
+		audioPlayingLabel.drawTextWithBackground(this->renderer, GlobalConstants::RED, GlobalConstants::BACKGROUND_BLUE, GlobalConstants::BACKGROUND_BLUE);
 		SDL_RenderPresent(this->renderer);
 	}
 
 	ifs.close();
 }
+
+
+bool Keyboard::SDL_KeyboardEventComparator(const SDL_KeyboardEvent& a, const SDL_KeyboardEvent& b) {
+	return (a.timestamp < b.timestamp);
+}
+
+
+void Keyboard::addForCyclesToEvents(std::vector<std::tuple<Uint32, Uint32, Uint32, std::vector<SDL_KeyboardEvent>>> forCycles, std::vector<SDL_KeyboardEvent> &events) {
+	Uint32 forCycleCycleCount;
+	Uint32 currTime;
+	Uint32 jumpTime;
+	SDL_KeyboardEvent keyboardEvent;
+	keyboardEvent.repeat = 0;
+	for (std::vector<std::tuple<Uint32, Uint32, Uint32, std::vector<SDL_KeyboardEvent>>>::iterator iter = forCycles.begin(); iter != forCycles.end(); iter++) {
+		currTime = std::get<0>(*iter);
+		forCycleCycleCount = std::get<1>(*iter);
+		jumpTime = std::get<2>(*iter);
+#if DEBUG
+		std::ofstream& logger = LoggerClass::getLogger();
+		logger << "Iteration, for cycle of size:" << std::get<3>(*iter).size() << " Will be repeated: " << forCycleCycleCount << std::endl;
+#endif
+
+		for (size_t i = 0; i < forCycleCycleCount; i++, currTime += jumpTime) {
+#if DEBUG
+			logger << "Cycle: " << i << std::endl;
+#endif
+			for (std::vector<SDL_KeyboardEvent>::iterator iterator = std::get<3>(*iter).begin(); iterator != std::get<3>(*iter).end(); iterator++) {
+				keyboardEvent.timestamp = currTime + iterator->timestamp;
+				keyboardEvent.state = iterator->state;
+				keyboardEvent.type = iterator->type;
+#if DEBUG
+				logger << "TIMESTAMP: " << keyboardEvent.timestamp << "\t";
+				logger << "EVENT state: " << keyboardEvent.state << "\t";
+#endif
+
+				keyboardEvent.keysym = iterator->keysym;
+				events.push_back(keyboardEvent);
+			}
+#if DEBUG
+			logger << std::endl;
+#endif
+		}
+	}
+}
+
 
 // Doesn't do anything with the textures argument
 int Keyboard::testTextSize(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font, 
@@ -2033,7 +2141,7 @@ TTF_Font * Keyboard::findFontForPlayKeys(int widthTolerance) {
 	for (fontSize = Label::DEFAULT_FONT_SIZE; fontSize > 1; fontSize--) {
 		font = TTF_OpenFont("arial.ttf", fontSize);
 		for (; j < this->keyCount; j++) {
-			if (performActionOnKeyLabels(&this->keys[j], font, widthTolerance, f, false, this->renderer) < 0) {
+			if (performActionOnKeyLabels(&this->keys[j], font, widthTolerance, false, f) < 0) {
 				break;
 			}
 		}
@@ -2064,20 +2172,19 @@ void Keyboard::drawKeyLabels() {
 
 	freeTextures();
 
-	performActionOnKeyLabels(&this->recordKey, font, widthTolerance, f, true, this->renderer);
+	performActionOnKeyLabels(&this->recordKey, font, widthTolerance, true, f);
 	f = Keyboard::drawKeyLabelPartWithWidthLimit;
 	for (size_t i = 0; i < this->keyCount; i++) {
-		performActionOnKeyLabels(&this->keys[i], font, widthTolerance, f, true, this->renderer);
+		performActionOnKeyLabels(&this->keys[i], font, widthTolerance, true, f);
 	}
 
 	TTF_CloseFont(font);
 }
 
 
-int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int widthTolerance,
+int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int widthTolerance, const bool draw,
 			std::function<int (const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font, 
-				int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures)> f,
-			const bool draw, SDL_Renderer *renderer)
+				int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures)> f)
 {
 	int currY = 0;
 	std::string keyLabel = "";
@@ -2098,7 +2205,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 
 	// Draw (test if it fits) the index of key.
-	currY = f(key, currY, keyLabel, GlobalVariables::RED, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+	currY = f(key, currY, keyLabel, GlobalConstants::RED, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 	if (!draw) {				// Since it is const parameter, compilator should optimize it out, so there should be no overhead
 		if (currY < 0) {
 			return currY;
@@ -2112,7 +2219,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	Uint16 mod = key->keysym.mod;
 	if (mod & KMOD_NUM) {
 		keyLabel = "NUM";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {				// Since it is const parameter, compilator should optimize it out, so there should be no overhead
 			if (currY < 0) {
 				return currY;
@@ -2121,7 +2228,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 	if (mod & KMOD_CAPS) {
 		keyLabel = "CAP";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2132,7 +2239,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	// If it is ALT, check if it is only 1 of the possible keys or both, that's the reason why here are else if
 	if (mod & KMOD_ALT) {
 		keyLabel = "ALT";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2141,7 +2248,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 	else if (mod & KMOD_LALT) {
 		keyLabel = "LAL";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2150,7 +2257,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 	else if (mod & KMOD_RALT) {
 		keyLabel = "RAL";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2161,7 +2268,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	// If it is SHIFT, check if it is only 1 of the possible keys or both, that's the reason why here are else if
 	if (mod & KMOD_SHIFT) {
 		keyLabel = "SHI";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2170,7 +2277,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 	else if (mod & KMOD_LSHIFT) {
 		keyLabel = "LSH";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2179,7 +2286,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 	else if (mod & KMOD_RSHIFT) {
 		keyLabel = "RSH";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2190,7 +2297,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	// If it is CTRL, check if it is only 1 of the possible keys or both, that's the reason why here are else if
 	if (mod & KMOD_CTRL) {
 		keyLabel = "CTR";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2199,7 +2306,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 	else if (mod & KMOD_LCTRL) {
 		keyLabel = "LCT";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2208,7 +2315,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 	}
 	else if (mod & KMOD_RCTRL) {
 		keyLabel = "RCT";
-		currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+		currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 		if (!draw) {
 			if (currY < 0) {
 				return currY;
@@ -2230,7 +2337,7 @@ int Keyboard::performActionOnKeyLabels(const Key *key, TTF_Font *font, int width
 		}
 	}
 
-	currY = f(key, currY, keyLabel, GlobalVariables::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
+	currY = f(key, currY, keyLabel, GlobalConstants::WHITE, font, widthTolerance, this->renderer, this->whiteKeyWidth, this->textures);
 	if (!draw) {
 		if (currY < 0) {
 			return currY;
@@ -2282,26 +2389,11 @@ void Keyboard::freeKeyboard() {
 	SDL_CloseAudioDevice(audioDevID);
 	freeKeys();
 
-	if (configFileTextbox != nullptr) {
-		configFileTextbox->freeTextbox();
-		delete configFileTextbox;
-		configFileTextbox = nullptr;
-	}
-	if (directoryWithFilesTextbox != nullptr) {
-		directoryWithFilesTextbox->freeTextbox();
-		delete directoryWithFilesTextbox;
-		directoryWithFilesTextbox = nullptr;
-	}
-	if (playFileTextbox != nullptr) {
-		playFileTextbox->freeTextbox();
-		delete playFileTextbox;
-		playFileTextbox = nullptr;
-	}
-	if (recordFilePathTextbox != nullptr) {
-		recordFilePathTextbox->freeTextbox();
-		delete recordFilePathTextbox;
-		recordFilePathTextbox = nullptr;
-	}
+	audioPlayingLabel.freeResources();
+	configFileTextbox.freeResources();
+	directoryWithFilesTextbox.freeResources();
+	playFileTextbox.freeResources();
+	recordFilePathTextbox.freeResources();
 
 	if (audioSpec != nullptr) {
 		audioSpec->callback = nullptr;		
