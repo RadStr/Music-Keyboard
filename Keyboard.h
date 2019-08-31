@@ -45,8 +45,8 @@ public:
 	ConfigFileTextbox configFileTextbox;
 	DirectoryWithFilesTextbox directoryWithFilesTextbox;
 
-	// Pointers, needs to be freed
 	SDL_AudioSpec audioSpec;
+	// Pointers, needs to be freed
 	SDL_AudioCVT *audioFromFileCVT;		// Stores the audio buffer from wav to be played
 	Uint8 *bufferOfCallbackSize = nullptr;
 	Key *keys;
