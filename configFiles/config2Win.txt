@@ -1,7 +1,0 @@
-30
-1 NUM F1 test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
-3 NUM F2 test\audioFiles\Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
-5 NUM F3 test\audioFiles\Alesis-Fusion-Clean-Guitar-C3.wav
-7 NUM F4 test\audioFiles\Bass-Drum-1.wav
-29 NUM A DEFAULT
-30 NUM 0 DEFAULT
