@@ -43,7 +43,6 @@ bool Button::checkMouseClick(const SDL_MouseButtonEvent &event) {
 
 
 bool Key::setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec) {
-	this->isDefaultSound = false;
 	Uint8 *audioBuffer = nullptr;
 	Uint32 audioBufferLen = 0;
 
@@ -52,6 +51,7 @@ bool Key::setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec
 
 	specPtr = SDL_LoadWAV(filename, specPtr, &audioBuffer, &audioBufferLen);
 	if (specPtr != nullptr) {
+		this->isDefaultSound = false;
 		delete[] this->audioConvert.buf;
 		this->audioConvert.buf = nullptr;
 
