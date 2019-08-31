@@ -103,7 +103,7 @@ void Keyboard::initAudioHW() {
 	logger << "SDL_Error: " << SDL_GetError() << std::endl;
 
 	logger << "Opening audio device...";
-	this->audioDevID = SDL_OpenAudioDevice(nullptr, 0, &this->audioSpec, &this->audioSpec, 0);
+	this->audioDevID = SDL_OpenAudioDevice(nullptr, 0, &this->audioSpec, &this->audioSpec, SDL_AUDIO_ALLOW_FREQUENCY_CHANGE | SDL_AUDIO_ALLOW_CHANNELS_CHANGE);
 	logger << "Audio device opened" << std::endl;
 	logger << "SDL_Error: " << SDL_GetError() << std::endl;
 
