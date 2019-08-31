@@ -5,13 +5,13 @@
 Label::Label() {
 	this->text = "";
 	this->fontSize = DEFAULT_FONT_SIZE;
-	this->font = TTF_OpenFont("arial.ttf", fontSize);
+	this->font = TTF_OpenFont("arial.ttf", static_cast<int>(fontSize));
 }
 
 Label::Label(const std::string &text) {
 	this->text = text;
 	this->fontSize = DEFAULT_FONT_SIZE;
-	this->font = TTF_OpenFont("arial.ttf", fontSize);
+	this->font = TTF_OpenFont("arial.ttf", static_cast<int>(fontSize));
 }
 
 
@@ -57,7 +57,7 @@ void Label::findFittingFont(int *textWidth, int *textHeight, int widthLimit, int
 	}
 	size_t fontSizeIter;
 	for (fontSizeIter = DEFAULT_FONT_SIZE; fontSizeIter > 1; fontSizeIter--) {
-		this->font = TTF_OpenFont("arial.ttf", fontSizeIter);
+		this->font = TTF_OpenFont("arial.ttf", static_cast<int>(fontSizeIter));
 		if (testTextSize(this->text, this->font, textWidth, textHeight, widthLimit, heightLimit) >= 0) {
 			this->fontSize = fontSizeIter;
 			break;
@@ -172,7 +172,7 @@ void Textbox::drawTextbox(SDL_Renderer *renderer) {
 
 
 void ConfigFileTextbox::processEnterPressedEvent(Keyboard &keyboard) {
-	int totalLines = 0;
+	size_t totalLines = 0;
 	keyboard.readConfigfile(&totalLines);
 	this->hasFocus = false;
 	keyboard.drawWindow();

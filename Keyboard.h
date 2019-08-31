@@ -46,7 +46,7 @@ public:
 	DirectoryWithFilesTextbox directoryWithFilesTextbox;
 
 	// Pointers, needs to be freed
-	SDL_AudioSpec *audioSpec;
+	SDL_AudioSpec audioSpec;
 	SDL_AudioCVT *audioFromFileCVT;		// Stores the audio buffer from wav to be played
 	Uint8 *bufferOfCallbackSize = nullptr;
 	Key *keys;
@@ -69,7 +69,7 @@ public:
 	std::vector<Key *> currentlyPressedKeys;
 
 	// Vector of vectors because of multiple channels ... vector[0] contains channel 0 of all just unpressed keys, etc.
-	// currentlyUnpressedKeys.size() = this->audioSpec->channels 
+	// currentlyUnpressedKeys.size() = this->audioSpec.channels 
 	std::vector<std::vector<Sint32>> currentlyUnpressedKeys;			// The reasoning for this is to not have crackling when key is unpressed 
 														// It happens, because the sound amplitude goes from some high value to 0 immediately and the
 														// HW which plays the sound can't produce it correctly, so what we do is that we gradually lower the
@@ -109,7 +109,7 @@ protected:
 	 bool checkForMods(const Uint16 keyMod, const Uint16 keyEventMod);
 
 	// Sets key location based on color of key (black or white)
-	constexpr void setKeyLocation(int *currX, int index);
+	constexpr void setKeyLocation(int *currX, size_t index);
 
 	// Sets variables such as whiteKeyHeight etc. based on the size of window
 	constexpr void setKeySizes();
@@ -185,7 +185,7 @@ public:
 	void keyPressAction(Key *key, Uint32 timestamp);
 
 	// Is called when play key is unpressed, performs needed actions (adding to currentlyUnpressedKeys and removing from currentlyPressedKeys etc.)
-	void keyUnpressAction(Key *key, Uint32 timestamp, int index);
+	void keyUnpressAction(Key *key, Uint32 timestamp, size_t index);
 
 	// Adds key to currentlyUnpressedKeys, looks what samples were played last and adds them.
 	void addToUnpressedKeys(Key *key);
@@ -203,11 +203,11 @@ public:
 
 	// ID is index of key (indexing from 0)
 	// Returns true if key with ID is white.
-	static bool isWhiteKey(int ID);
+	static bool isWhiteKey(size_t ID);
 
 	// If configFile == "" then it is same as calling defaultInit, else inits keyboard based on given configFile
 	// totalLineInFile returns the total number of lines in config file without the first line (which tells number of keys in file)
-	int initKeyboard(const std::string &configFile, int *totalLinesInFile);
+	int initKeyboard(const std::string &configFile, size_t *totalLinesInFile);
 
 	// Is called as callback function to fill the bufferToBePlayed, which will be played next.
 	// (Respectively audio_callback function is the real callback function, but it calls this one) 
@@ -254,7 +254,7 @@ public:
 	// Fills the buffer in keyCVT with tone based on keyID, in format from given spec
 	// So in the end the buffer will contain the tone in spec given as parameter.
 	// And it will contain the numberOfSeconds of audio 
-	void generateTone(const SDL_AudioSpec *spec, int keyID, size_t numberOfSeconds, SDL_AudioCVT *keyCVT);
+	void generateTone(const SDL_AudioSpec *spec, int keyID, Uint32 numberOfSeconds, SDL_AudioCVT *keyCVT);
 
 // File methods
 	// Creates the .keys file which will have full path path.keys
@@ -272,19 +272,19 @@ public:
 	constexpr void setBlackAndWhiteKeysCounts();
 
 	// Counts number of black keys, if total number of keys on keyboard == keyCountLocal
-	constexpr int countBlackKeys(int keyCountLocal);
+	constexpr size_t countBlackKeys(size_t keyCountLocal);
 
 	// Initializes all the keys and almost all properties
 	// If initAudioBuffer == true then initialize the buffers of keys with the default tone
 	int defaultInit(size_t totalKeys, bool initAudioBuffer);
 
 	// totalLinesInFile says how many lines (keys) were really in file - 1 (the first line should contain number of keys on keyboard, so we don't count that)
-	int readConfigfile(int *totalLinesInFile);
+	int readConfigfile(size_t *totalLinesInFile);
 
 
 protected:
 	// Processes all the lines in config file after the first one and initializes al lthe keys based on the config file
-	int processKeysInConfigFile(std::ifstream &s, std::string &line, size_t totalLineCountInConfig, int *totalLinesInFile);
+	int processKeysInConfigFile(std::ifstream &s, std::string &line, size_t totalLineCountInConfig, size_t *totalLinesInFile);
 	void addForCyclesToEvents(std::vector<std::tuple<Uint32, Uint32, Uint32, std::vector<SDL_KeyboardEvent>>> forCycles, std::vector<SDL_KeyboardEvent> &events);
 
 	// Finds which play key was pressed (Is called only when we know that the the place where we clicked hit some key but we don't know which)
@@ -292,7 +292,7 @@ protected:
 	Key * findKeyOnPos(Sint32 x, Sint32 y);
 
 	// It is just default initialization of controls for all the keys
-	constexpr void defaultInitControlKeys(int currKey);
+	constexpr void defaultInitControlKeys(size_t currKey);
 
 private:
 	// Frees memory associated with the buffer and then the SDL_AudioCVT itself and sets it to 0

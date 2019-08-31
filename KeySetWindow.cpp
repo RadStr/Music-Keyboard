@@ -178,7 +178,7 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 
 
 	if (enterPressed) {
-		this->key->setAudioBufferWithFile(&this->fileTextbox.text[0], this->keyboard->audioSpec);
+		this->key->setAudioBufferWithFile(&this->fileTextbox.text[0], &this->keyboard->audioSpec);
 		this->keyLabel.hasFocus = false;
 		this->fileTextbox.hasFocus = false;
 	}
