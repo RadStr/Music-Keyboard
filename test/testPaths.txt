@@ -13,6 +13,8 @@ test/configFiles/config3Unix.txt
 
 test\audioFiles
 test\audioFiles\keysExample.keys
+test\forCycle.keys
+test\forCycle2.keys
 test\audioFiles\Bass-Drum-1.wav
 test\audioFiles\Alesis-Fusion-Clean-Guitar-C3.wav
 test\audioFiles\Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
@@ -20,6 +22,8 @@ test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
 
 test/audioFiles
 test/audioFiles/keysExample.keys
+test/forCycle.keys
+test/forCycle2.keys
 test/audioFiles/Bass-Drum-1.wav
 test/audioFiles/Alesis-Fusion-Clean-Guitar-C3.wav
 test/audioFiles/Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
