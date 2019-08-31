@@ -6,7 +6,6 @@ KeySetWindow::KeySetWindow(Key *key, SDL_Color color, Keyboard *keyboard) {
 	this->key = key;
 	window = SDL_CreateWindow("Key set window", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 	this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
-	Uint32 flags = SDL_GetWindowFlags(this->window);
 	this->keyLabel.hasFocus = false;
 	this->fileTextbox.hasFocus = false;
 	this->needRedraw = false;
@@ -179,7 +178,7 @@ bool KeySetWindow::checkEvents(const SDL_Event &event, bool *returnVal) {
 
 
 	if (enterPressed) {
-		this->key->setAudioBufferWithFile(&this->fileTextbox.text[0], this->keyboard->audioSpec);
+		this->key->setAudioBufferWithFile(&this->fileTextbox.text[0], &this->keyboard->audioSpec);
 		this->keyLabel.hasFocus = false;
 		this->fileTextbox.hasFocus = false;
 	}
@@ -250,8 +249,8 @@ void KeySetWindow::drawWindow() {
 
 
 void KeySetWindow::drawTextboxes() {
-	this->keyLabel.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BLACK);
-	this->fileTextbox.drawTextWithBackground(this->renderer, this->color, GlobalVariables::RED, GlobalVariables::BACKGROUND_BLUE);
+	this->keyLabel.drawTextWithBackground(this->renderer, this->color, GlobalConstants::RED, GlobalConstants::BLACK);
+	this->fileTextbox.drawTextWithBackground(this->renderer, this->color, GlobalConstants::RED, GlobalConstants::BACKGROUND_BLUE);
 }
 
 

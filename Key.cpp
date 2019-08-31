@@ -2,7 +2,7 @@
 #include "Keyboard.h"
 
 
-TimestampAndID::TimestampAndID(Uint32 timestamp, int ID, KeyEventType keyEventType) {
+TimestampAndID::TimestampAndID(Uint32 timestamp, size_t ID, KeyEventType keyEventType) {
 	this->timestamp = timestamp;
 	this->ID = ID;
 	this->keyEventType = keyEventType;
@@ -47,30 +47,21 @@ bool Key::setAudioBufferWithFile(char *filename, SDL_AudioSpec *desiredAudioSpec
 	Uint8 *audioBuffer = nullptr;
 	Uint32 audioBufferLen = 0;
 
-	SDL_AudioSpec *spec = new SDL_AudioSpec();
-	SDL_AudioSpec *specForFree = spec;
+	SDL_AudioSpec spec = SDL_AudioSpec();
+	SDL_AudioSpec *specPtr = &spec;
 
-	spec = SDL_LoadWAV(filename, spec, &audioBuffer, &audioBufferLen);
-	if (spec != nullptr) {
+	specPtr = SDL_LoadWAV(filename, specPtr, &audioBuffer, &audioBufferLen);
+	if (specPtr != nullptr) {
 		delete[] this->audioConvert.buf;
 		this->audioConvert.buf = nullptr;
 
-		Keyboard::convert(&this->audioConvert, spec, desiredAudioSpec, audioBuffer, audioBufferLen);
+		Keyboard::convert(&this->audioConvert, specPtr, desiredAudioSpec, audioBuffer, audioBufferLen);
 		SDL_FreeWAV(audioBuffer);
 		audioBuffer = nullptr;
-			
-		if (spec != specForFree) {		// This case shouldn't happen, but just in case
-			delete spec;
-			delete specForFree;
-		}
-		else {
-			delete spec;
-		}	
 
 		return true;
 	}
 	else {
-		delete specForFree;
 		return false;
 	}
 }

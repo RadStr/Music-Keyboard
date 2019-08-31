@@ -12,10 +12,10 @@ enum KeyEventType {
 class TimestampAndID {
 public:
 	// Constructor just copies constructor arguments to properties
-	TimestampAndID(Uint32 timestamp, int ID, KeyEventType keyEventType);
+	TimestampAndID(Uint32 timestamp, size_t ID, KeyEventType keyEventType);
 
 	Uint32 timestamp;
-	int ID;
+	size_t ID;
 	KeyEventType keyEventType;
 };
 
@@ -48,7 +48,7 @@ public:
 	SDL_AudioCVT audioConvert;	 
 	
 	// Key ID (indexing from 0 ... left key on keyboard has index 0)
-	int ID;
+	size_t ID;
 
 	// == true if it was initialized by the default tone (If the audio buffer wasn't initialized from file)
 	// == false otherwise

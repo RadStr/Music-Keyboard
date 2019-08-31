@@ -1,0 +1,17 @@
+20
+1 SHIFT+NUM+CTRL A test\audioFiles\Bass-Drum-1.wav
+2 NOMOD B test\audioFiles\Alesis-Fusion-Clean-Guitar-C3.wav
+3 CAPS+NUM+CTRL ; test\audioFiles\Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
+4 NOMOD a test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
+
+6 NOMOD SPACE test\audioFiles\Bass-Drum-1.wav
+7 NOMOD BACKSPACE test\audioFiles\Alesis-Fusion-Clean-Guitar-C3.wav
+8 NUM 0KP test\audioFiles\Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
+9 NOMOD 0KP test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
+10 NUM SPACE DEFAULT
+11 NOMOD SPACE test\audioFiles\Bass-Drum-1.wav
+12 NOMOD ENTER test\audioFiles\Alesis-Fusion-Clean-Guitar-C3.wav
+13 NOMOD ENTERKP test\audioFiles\Alesis-Fusion-Bright-Acoustic-Piano-C2.wav
+14 NOMOD + test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
+15 NOMOD UP test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
+16 NOMOD DOWN test\audioFiles\Alesis-Fusion-Acoustic-Bass-C2.wav
