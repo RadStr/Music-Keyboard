@@ -131,7 +131,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Key.cpp" />
-    <ClCompile Include="Keyboard.cpp" />
+    <ClCompile Include="KeyboardInit.cpp" />
+    <ClCompile Include="KeyboardMain.cpp" />
+    <ClCompile Include="KeyboardAudio.cpp" />
+    <ClCompile Include="KeyboardDraw.cpp" />
+    <ClCompile Include="KeyboardSet.cpp" />
     <ClCompile Include="KeySetWindow.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="Textbox.cpp" />
