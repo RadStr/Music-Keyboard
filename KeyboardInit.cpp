@@ -1,5 +1,56 @@
 #include "Keyboard.h"
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////// 
+///////		Constructor
+//////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Keyboard::Keyboard(SDL_Window *window, SDL_Renderer *renderer) {
+	std::ofstream& logger = LoggerClass::getLogger();
+
+	audioFromFileCVT = nullptr;
+	audioFromFileBufferIndex = 0;
+	recordStartTime = 0;
+
+	SDL_StopTextInput();
+	this->window = window;
+	this->renderer = renderer;
+	SDL_GetWindowSize(this->window, &windowWidth, &windowHeight);
+
+
+	quit = false;
+	isRecording = false;
+	shouldRedrawTextboxes = false;
+	shouldRedrawKeys = false;
+	shouldRedrawKeyLabels = false;
+
+	keyPressedByMouse = nullptr;
+	recordStartTime = 0;
+	keySetWindowTextColor = GlobalConstants::WHITE;
+	textboxWithFocus = nullptr;
+
+	if (window == nullptr) {
+		throw std::invalid_argument("Keyboard couldn't be initalized because window does not exist.");
+	}
+
+	this->configFileTextbox = ConfigFileTextbox("TEXTBOX WITH PATH TO THE CONFIG FILE");
+	this->directoryWithFilesTextbox = DirectoryWithFilesTextbox("TEXTBOX WITH PATH TO THE DIRECTORY CONTAINING FILES");
+	this->recordFilePathTextbox = RecordFilePathTextbox("TEXTBOX WITH PATH TO THE RECORDED FILE");
+	this->playFileTextbox = PlayFileTextbox("TEXTBOX WITH PATH TO THE FILE TO BE PLAYED");
+	this->audioPlayingLabel = Label("");
+	logger << "resizeTextboxes()...: ";
+	resizeTextboxes();
+	logger << "resizeTextboxes() done, SDL error: " << SDL_GetError() << std::endl;
+	logger << "Initializing HW..." << std::endl;
+	initAudioHW();
+	logger << "HW initialized, SDL error: " << SDL_GetError() << std::endl;
+	logger << "Calling initKeyboard()...";
+	size_t tmp = 0;					// Not Ideal
+	initKeyboard("", &tmp);
+	logger << "initKeyboard() ended, SDL error was: " << SDL_GetError() << std::endl;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////// 
 ///////		Init methods
