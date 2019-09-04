@@ -22,6 +22,7 @@ std::ofstream& LoggerClass::getLogger() {
 // Returns -1 if the TTF couldn't be initialized
 int main(int argc, char *argv[])
 {
+	// Unused parameters, but are needed for SDL library to find main method
 	static_cast<void>(argc);
 	static_cast<void>(argv);
 
