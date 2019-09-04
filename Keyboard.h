@@ -175,6 +175,7 @@ protected:
 //////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Returns number < 0 if the keyLabelPart doesn't fit, else returns currY where should be placed next keyLabel for that key
+	// Paramters key, currY, color, renderer aren't used in the method, they are just there to fit method signature. More info in implementation.
 	static int testTextSize(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font,
 		int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures);
 

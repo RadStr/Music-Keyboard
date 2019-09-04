@@ -141,10 +141,10 @@ int Keyboard::testTextSize(const Key *key, int currY, const std::string &keyLabe
 	int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures)
 {
 	// Unused parameters, but are needed to fit method signature of std::function used in method performActionOnKeyLabels
-	static_cast<void>(renderer);
-	static_cast<void>(color);
-	static_cast<void>(currY);
 	static_cast<void>(key);
+	static_cast<void>(currY);
+	static_cast<void>(color);
+	static_cast<void>(renderer);
 
 
 	int jumpY;
