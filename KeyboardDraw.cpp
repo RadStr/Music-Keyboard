@@ -140,6 +140,12 @@ TTF_Font * Keyboard::findFontForPlayKeys(int widthTolerance) {
 int Keyboard::testTextSize(const Key *key, int currY, const std::string &keyLabelPart, const SDL_Color color, TTF_Font *font,
 	int widthTolerance, SDL_Renderer *renderer, int whiteKeyWidth, std::vector<SDL_Texture *> textures)
 {
+	static_cast<void>(renderer);
+	static_cast<void>(color);
+	static_cast<void>(currY);
+	static_cast<void>(key);
+
+
 	int jumpY;
 	int textWidth;
 	TTF_SizeText(font, &keyLabelPart[0], &textWidth, &jumpY);

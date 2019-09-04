@@ -22,6 +22,10 @@ std::ofstream& LoggerClass::getLogger() {
 // Returns -1 if the TTF couldn't be initialized
 int main(int argc, char *argv[])
 {
+	static_cast<void>(argc);
+	static_cast<void>(argv);
+
+
 	SDL_Window *window;
 	SDL_Renderer *renderer;
 	SDL_Init(SDL_INIT_EVERYTHING);
